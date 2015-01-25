@@ -1,4 +1,1 @@
-{"type":"config","webpack":{},"fispack":{"min":false},"projectPath":"E:\\FEWork\\Remix","wwwPath":"e:\\FEWork\\Remix\\wwwroot","_id":"VJqmdIauGZad1T7q"}
-{"type":"config","webpack":{},"fispack":{"min":false},"projectPath":"E:\\FEWork\\Remix","wwwPath":"e:\\FEWork\\Remix\\wwwroot","_id":"VJqmdIauGZad1T7q"}
-{"type":"config","webpack":{"entry":{"app":["./app.js"]},"common":""},"fispack":{"min":false},"projectPath":"E:\\FEWork\\Remix","wwwPath":"e:\\FEWork\\Remix\\wwwroot","_id":"VJqmdIauGZad1T7q"}
 {"type":"config","webpack":{"entry":{"app":["./app"]},"common":""},"fispack":{"min":false},"projectPath":"E:\\FEWork\\Remix","wwwPath":"e:\\FEWork\\Remix\\wwwroot","_id":"VJqmdIauGZad1T7q"}

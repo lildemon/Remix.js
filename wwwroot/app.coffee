@@ -1,4 +1,14 @@
 Remix = require('../Remix')
-AjaxExtension = require('../extensions/ajax')
+Alert = Remix.create
+	template: """
+		<h1></h1>
+	"""
+	onNodeCreated: ->
+		@node.appendTo(document.body)
+	render: (data) ->
+		@node.text(data)
 
-console.log Remix
+Alert('abc')
+
+window.Remix = Remix
+window.Alert = Alert

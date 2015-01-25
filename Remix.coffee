@@ -81,6 +81,8 @@ do (factory = ($) ->
 		constructor: ->
 			@init?(arguments...)
 
+	$.parseHTML = $.parseHTML or (html)->
+		return html
 	class Component extends Module
 		@include Events
 		@extend Events
@@ -112,7 +114,7 @@ do (factory = ($) ->
 			@initialize()
 
 		initialize: ->
-			# only Remix Child can be used
+			# only Remix Child can be garenteed to be used
 
 		onNodeCreated: ->
 			# child component should use refs and assume event is alive
@@ -175,15 +177,21 @@ do (factory = ($) ->
 					@node = $({})
 				oldNode.replaceWith(@node) if oldNode
 				@_parseRefs()
+				@_parseRemix()
 				@_parseEvents()
 				@onNodeCreated()
 			else
 				@node = $($.parseHTML('<span class="loading">正在加载</span>'))
 
 		_parseRefs: ->
-			@node.find('[ref]').each (i, el)=>
+			@node.find('[ref]').each (i, el) =>
 				$this = $(el)
 				@[$this.attr('ref')] = $this
+
+		_parseRemix: ->
+			@node.find('[remix]').each (i, el) =>
+				$this = $(el)
+				$this.replaceWith(@[$this.attr('remix')]($this.data('remix'), $this.attr('key')).node)
 
 		_parseEvents: ->
 			# I'm lazy..

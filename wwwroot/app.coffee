@@ -20,24 +20,37 @@ Button = Remix.create
 Dialog = Remix.create
 	remixChild:
 		Button: Button
-		
+
 	template: """
 		<div class="fixed-center">
 			<div class="content" ref="content"></div>
-			<div class="buttons-container" ref="btnContainer"></div>
+			<div class="buttons-container" ref="btnContainer">
+				<div remix="Button" data-remix="HEULLO"></div>
+			</div>
 		</div>
+		<h3>TITLE</h3>
 	"""
 	onNodeCreated: ->
-		@btnContainer.append(@Button('HELLO').node)
+		#@btnContainer.append(@Button('HELLO').node)
 		@node.appendTo(document.body)
 
 	render: (data) ->
 		@content.html(data.html)
-		@Button(data.button)
+		#@Button(data.button)
 
-Dialog """
-	<h2>This is Dialog</h2>
-"""
+Dialog 
+	html: """
+		<h2>This is Dialog</h2>
+	"""
+	button: '确认'
+
+setTimeout ->
+	Dialog 
+		html: """
+			<h2>Changed Dialog</h2>
+		"""
+		button: '取消'
+, 2000
 
 window.Remix = Remix
 window.Alert = Alert

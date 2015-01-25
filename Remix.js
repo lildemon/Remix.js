@@ -202,8 +202,8 @@
             xhr.fail(errHandle);
             return xhr.complete((function(_this) {
               return function() {
-                _this.trigger('template-loaded');
-                return _this.templateLoaded = true;
+                _this.templateLoaded = true;
+                return _this.trigger('template-loaded');
               };
             })(this));
           }
@@ -227,6 +227,14 @@
         return this.node;
       };
 
+      Component.prototype.appendTo = function(node) {
+        return this.node.appendTo(node);
+      };
+
+      Component.prototype.nodeTrigger = function() {
+        return this.node.trigger.apply(this.node, arguments);
+      };
+
       Component.prototype.destroy = function(noRemove) {
         var $id, comp, key, keyedComp, _ref;
         if (typeof this.onDestroy === "function") {
@@ -246,6 +254,7 @@
           }
         }
         this.off();
+        this.node.off();
         return this.parent._delChildComp(this.constructor, this.key);
       };
 
@@ -351,7 +360,32 @@
         })(this));
       };
 
-      Component.prototype._parseEvents = function() {};
+      Component.prototype._parseEvents = function() {
+        var eventStr, eventType, handleEvent, handler, selector, _ref, _ref1, _results;
+        if (this.remixEvent && typeof this.remixEvent === 'object') {
+          _ref = this.remixEvent;
+          _results = [];
+          for (eventStr in _ref) {
+            handler = _ref[eventStr];
+            _ref1 = eventStr.split(','), eventType = _ref1[0], selector = _ref1[1];
+            eventType = $.trim(eventType);
+            selector = $.trim(selector);
+            handleEvent = (function(_this) {
+              return function(e) {
+                var _ref2;
+                e.stopPropagation();
+                return (_ref2 = _this[handler]) != null ? _ref2.apply(_this, e) : void 0;
+              };
+            })(this);
+            if (selector) {
+              _results.push(this.node.on(eventType, selector, handleEvent));
+            } else {
+              _results.push(this.node.on(eventType, handleEvent));
+            }
+          }
+          return _results;
+        }
+      };
 
       return Component;
 

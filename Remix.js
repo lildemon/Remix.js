@@ -169,6 +169,9 @@
       return Module;
 
     })();
+    $.parseHTML = $.parseHTML || function(html) {
+      return html;
+    };
     Component = (function(_super) {
       __extends(Component, _super);
 
@@ -306,6 +309,7 @@
             oldNode.replaceWith(this.node);
           }
           this._parseRefs();
+          this._parseRemix();
           this._parseEvents();
           return this.onNodeCreated();
         } else {
@@ -319,6 +323,30 @@
             var $this;
             $this = $(el);
             return _this[$this.attr('ref')] = $this;
+          };
+        })(this));
+      };
+
+      Component.prototype._parseRemix = function() {
+        return this.node.find('[remix]').each((function(_this) {
+          return function(i, el) {
+            var $this, data, key, newVal, val;
+            $this = $(el);
+            data = $this.data('remix');
+            if (!data) {
+              data = $this.data();
+              for (key in data) {
+                val = data[key];
+                if (val.indexOf('@') === 0 && (_this[val.substring(1)] != null)) {
+                  newVal = _this[val.substring(1)];
+                  if (typeof newVal === 'function') {
+                    newVal = _this.proxy(newVal);
+                  }
+                  data[key] = newVal;
+                }
+              }
+            }
+            return $this.replaceWith(_this[$this.attr('remix')]($this.data('remix') || $this.data(), $this.attr('key')).node);
           };
         })(this));
       };

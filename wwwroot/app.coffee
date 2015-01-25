@@ -14,6 +14,17 @@ Button = Remix.create
 	template: """
 		<button class="btn-primary" ref="button"></button>
 	"""
+
+	remixEvent:
+		'click': "onClick"
+
+	onClick: (e) ->
+		if @data?.callback
+			@data?.callback?()
+		alert('BUTTON')
+		@nodeTrigger('button-clicked')
+
+
 	render: (data) ->
 		@data = data
 		if(data.name)
@@ -33,6 +44,18 @@ Dialog = Remix.create
 		</div>
 		<h3>TITLE</h3>
 	"""
+
+	remixEvent:
+		
+		'button-clicked': 'onCustomEvent'
+		'click, .buttons-container': 'onContainerClick'
+
+	onContainerClick: ->
+		alert('container click')
+
+	onCustomEvent: ->
+		alert('Custom Event')
+
 	onNodeCreated: ->
 		#@btnContainer.append(@Button('HELLO').node)
 		@node.appendTo(document.body)
@@ -59,6 +82,11 @@ setTimeout ->
 		"""
 		button: '取消'
 , 2000
+
+DialogFrom = window.d =  Remix.create
+	template: "/from.html"
+
+DialogFrom()
 
 window.Remix = Remix
 window.Alert = Alert

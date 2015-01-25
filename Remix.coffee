@@ -100,8 +100,9 @@ do (factory = ($) ->
 						@templateNode = $($.parseHTML('<span>模版载入出错</span>'))
 					xhr.fail errHandle
 					xhr.complete =>
-						@.trigger('template-loaded')
 						@templateLoaded = true
+						@.trigger('template-loaded')
+						
 					#xhr.error errHandle
 			else
 				#throw '无法解析template'
@@ -127,6 +128,12 @@ do (factory = ($) ->
 			@trigger('updated')
 			@node
 
+		appendTo: (node) ->
+			@node.appendTo(node)
+
+		nodeTrigger: ->
+			@node.trigger.apply(@node, arguments)
+
 
 		destroy: (noRemove) ->
 			@onDestroy?()
@@ -135,6 +142,7 @@ do (factory = ($) ->
 				for own key, comp of keyedComp
 					comp.destroy(true) # to let comp unregister listener etc, but not need hard remove
 			@off()
+			@node.off()
 			@parent._delChildComp(@constructor, @key)
 
 		_optimistRender: (data) ->
@@ -205,6 +213,18 @@ do (factory = ($) ->
 		_parseEvents: ->
 			# I'm lazy..
 			# eventDSL should stop propagating events
+			if @remixEvent and typeof @remixEvent is 'object'
+				for eventStr, handler of @remixEvent
+					[eventType, selector] = eventStr.split(',')
+					eventType = $.trim(eventType)
+					selector = $.trim(selector)
+					handleEvent = (e) =>
+						e.stopPropagation()
+						@[handler]?.apply @, e
+					if selector
+						@node.on(eventType, selector, handleEvent)
+					else
+						@node.on(eventType, handleEvent)
 
 
 

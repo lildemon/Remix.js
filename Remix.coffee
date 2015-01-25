@@ -107,8 +107,8 @@ do (factory = ($) ->
 
 		constructor: ->
 			# constructor better not override by child component
-			@_parseTemplate()
 			@_parseRemixChild()
+			@_parseTemplate()
 			@initialize()
 
 		initialize: ->
@@ -126,12 +126,12 @@ do (factory = ($) ->
 			@node
 
 
-		destroy: (hard) ->
+		destroy: (noRemove) ->
 			@onDestroy?()
-			@node.remove() if hard
+			@node.remove() unless noRemove
 			for own $id, keyedComp of @child_components
 				for own key, comp of keyedComp
-					comp.destroy() # to let comp unregister listener etc, but not need hard remove
+					comp.destroy(true) # to let comp unregister listener etc, but not need hard remove
 			@off()
 			@parent._delChildComp(@constructor, @key)
 
@@ -163,7 +163,7 @@ do (factory = ($) ->
 
 		_parseRemixChild: ->
 			if @remixChild and typeof @remixChild is 'object'
-				for own key, comp of @remixChild
+				for key, comp of @remixChild
 					@[key] = comp.setParent(@)
 
 		_parseTemplate: ->

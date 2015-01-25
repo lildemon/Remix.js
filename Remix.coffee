@@ -191,7 +191,7 @@ do (factory = ($) ->
 		_parseRemix: ->
 			@node.find('[remix]').each (i, el) =>
 				$this = $(el)
-				$this.replaceWith(@[$this.attr('remix')]($this.data('remix'), $this.attr('key')).node)
+				$this.replaceWith(@[$this.attr('remix')]($this.data('remix') || $this.data(), $this.attr('key')).node)
 
 		_parseEvents: ->
 			# I'm lazy..

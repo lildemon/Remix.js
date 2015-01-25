@@ -25,7 +25,8 @@ Dialog = Remix.create
 		<div class="fixed-center">
 			<div class="content" ref="content"></div>
 			<div class="buttons-container" ref="btnContainer">
-				<div remix="Button" data-remix="HEULLO"></div>
+				<div remix="Button" data-remix="HEULLO" key="btn1"></div>
+				<div remix="Button" data-remix="HEUsdfLLO"></div>
 			</div>
 		</div>
 		<h3>TITLE</h3>
@@ -40,7 +41,7 @@ Dialog = Remix.create
 
 Dialog 
 	html: """
-		<h2>This is Dialog</h2>
+		<h2 data-a='adsf' data-b='eoiue'>This is Dialog</h2>
 	"""
 	button: '确认'
 

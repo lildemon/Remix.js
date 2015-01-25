@@ -15,7 +15,9 @@ Button = Remix.create
 		<button class="btn-primary" ref="button"></button>
 	"""
 	render: (data) ->
-		@node.text(data)
+		@data = data
+		if(data.name)
+			@node.text(data.name)
 
 Dialog = Remix.create
 	remixChild:
@@ -25,8 +27,8 @@ Dialog = Remix.create
 		<div class="fixed-center">
 			<div class="content" ref="content"></div>
 			<div class="buttons-container" ref="btnContainer">
-				<div remix="Button" data-remix="HEULLO" key="btn1"></div>
-				<div remix="Button" data-remix="HEUsdfLLO"></div>
+				<div remix="Button" data-name="helloBtn1" data-callback="@btnCallback" key="btn1"></div>
+				<div remix="Button"></div>
 			</div>
 		</div>
 		<h3>TITLE</h3>
@@ -37,13 +39,18 @@ Dialog = Remix.create
 
 	render: (data) ->
 		@content.html(data.html)
-		#@Button(data.button)
+		@Button({name: data.button, callback: data.callback}, 'btn1')
+
+	btnCallback: ->
+		alert('btncb')
 
 Dialog 
 	html: """
 		<h2 data-a='adsf' data-b='eoiue'>This is Dialog</h2>
 	"""
 	button: '确认'
+	callback: ->
+		alert('sdf')
 
 setTimeout ->
 	Dialog 

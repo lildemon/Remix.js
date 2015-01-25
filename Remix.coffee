@@ -191,10 +191,20 @@ do (factory = ($) ->
 		_parseRemix: ->
 			@node.find('[remix]').each (i, el) =>
 				$this = $(el)
+				data = $this.data('remix')
+				unless data
+					data = $this.data()
+					for key, val of data
+						if val.indexOf('@') is 0 and @[val.substring(1)]?
+							newVal = @[val.substring(1)]
+							newVal = @proxy(newVal) if typeof newVal is 'function'
+							data[key] = newVal
+
 				$this.replaceWith(@[$this.attr('remix')]($this.data('remix') || $this.data(), $this.attr('key')).node)
 
 		_parseEvents: ->
 			# I'm lazy..
+			# eventDSL should stop propagating events
 
 
 

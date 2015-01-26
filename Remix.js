@@ -222,13 +222,18 @@
 
       Component.prototype.onNodeCreated = function() {};
 
+      Component.prototype.addChild = function(name, childMix) {
+        return this[name] = childMix.setParent(this);
+      };
+
       Component.prototype.render = function() {
         this.trigger('updated');
         return this.node;
       };
 
       Component.prototype.appendTo = function(node) {
-        return this.node.appendTo(node);
+        this.node.appendTo(node);
+        return this;
       };
 
       Component.prototype.nodeTrigger = function() {
@@ -279,6 +284,17 @@
         return (_ref = this.child_components) != null ? (_ref1 = _ref[CompClass.$id]) != null ? _ref1[key] : void 0 : void 0;
       };
 
+      Component.prototype._getAllChildComp = function(CompClass) {
+        var comp, key, _ref, _ref1, _results;
+        _ref1 = (_ref = this.child_components) != null ? _ref[CompClass.$id] : void 0;
+        _results = [];
+        for (key in _ref1) {
+          comp = _ref1[key];
+          _results.push(comp);
+        }
+        return _results;
+      };
+
       Component.prototype._regChildComp = function(comp, CompClass, key) {
         var comps, keyedComp, _name;
         comps = this.child_components || (this.child_components = {});
@@ -299,7 +315,7 @@
           _results = [];
           for (key in _ref) {
             comp = _ref[key];
-            _results.push(this[key] = comp.setParent(this));
+            _results.push(this.addChild(key, comp));
           }
           return _results;
         }
@@ -346,11 +362,18 @@
               data = $this.data();
               for (key in data) {
                 val = data[key];
-                if (val.indexOf('@') === 0 && (_this[val.substring(1)] != null)) {
-                  newVal = _this[val.substring(1)];
-                  if (typeof newVal === 'function') {
-                    newVal = _this.proxy(newVal);
-                  }
+                if (val.indexOf('@') === 0) {
+                  newVal = (function(val) {
+                    return function() {
+                      var funName;
+                      funName = val.substring(1);
+                      if (_this[funName]) {
+                        return _this[funName]();
+                      } else {
+                        throw "" + funName + " 方法不存在";
+                      }
+                    };
+                  })(val);
                   data[key] = newVal;
                 }
               }
@@ -374,7 +397,7 @@
               return function(e) {
                 var _ref2;
                 e.stopPropagation();
-                return (_ref2 = _this[handler]) != null ? _ref2.apply(_this, e) : void 0;
+                return (_ref2 = _this[handler]) != null ? _ref2.call(_this, e) : void 0;
               };
             })(this);
             if (selector) {
@@ -402,8 +425,12 @@
 
       Remix.id_counter = 1;
 
-      Remix.create = function(definition) {
-        var NewComp, setParent;
+      Remix.create = function(name, definition) {
+        var NewComp, NewRemix, setParent;
+        if (definition == null) {
+          definition = name;
+          name = null;
+        }
         NewComp = (function(_super1) {
           __extends(NewComp, _super1);
 
@@ -439,9 +466,22 @@
             return comp;
           };
           CompProxy.setParent = setParent;
+          CompProxy.get = function(key) {
+            if (!key) {
+              key = '$default';
+            }
+            return parent._getChildComp(NewComp, key);
+          };
+          CompProxy.getAll = function() {
+            return parent._getAllChildComp(NewComp);
+          };
           return CompProxy;
         };
-        return setParent(GlobalComp);
+        NewRemix = setParent(GlobalComp);
+        if (name) {
+          Remix[name] = NewRemix;
+        }
+        return NewRemix;
       };
 
       return Remix;

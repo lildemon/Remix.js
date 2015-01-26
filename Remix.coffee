@@ -122,6 +122,9 @@ do (factory = ($) ->
 			# some parent comp might intrested on child comp's update
 				# Panels().on('updated', @proxy(@updateTabs))
 
+		addChild: (name, childMix) ->
+			@[name] = childMix.setParent(@)
+
 		render: ->
 			# use ref, @node to update.. etc
 			#@node
@@ -130,6 +133,8 @@ do (factory = ($) ->
 
 		appendTo: (node) ->
 			@node.appendTo(node)
+			this
+
 
 		nodeTrigger: ->
 			@node.trigger.apply(@node, arguments)
@@ -162,6 +167,10 @@ do (factory = ($) ->
 			# The class is unique identifier to this component
 			@child_components?[ CompClass.$id ]?[key]
 
+		_getAllChildComp: (CompClass) ->
+			comp for key, comp of @child_components?[ CompClass.$id ]
+
+
 		_regChildComp: (comp, CompClass, key) ->
 			comps = @child_components or = {}
 			keyedComp = comps[ CompClass.$id ] or= {}
@@ -174,7 +183,7 @@ do (factory = ($) ->
 		_parseRemixChild: ->
 			if @remixChild and typeof @remixChild is 'object'
 				for key, comp of @remixChild
-					@[key] = comp.setParent(@)
+					@addChild(key, comp)
 
 		_parseTemplate: ->
 			if @constructor.templateLoaded
@@ -203,9 +212,11 @@ do (factory = ($) ->
 				unless data
 					data = $this.data()
 					for key, val of data
-						if val.indexOf('@') is 0 and @[val.substring(1)]?
-							newVal = @[val.substring(1)]
-							newVal = @proxy(newVal) if typeof newVal is 'function'
+						if val.indexOf('@') is 0
+							newVal = do (val) =>
+								=>
+									funName = val.substring(1)
+									if @[funName] then @[funName]() else throw "#{funName} 方法不存在"
 							data[key] = newVal
 
 				$this.replaceWith(@[$this.attr('remix')]($this.data('remix') || $this.data(), $this.attr('key')).node)
@@ -220,7 +231,7 @@ do (factory = ($) ->
 					selector = $.trim(selector)
 					handleEvent = (e) =>
 						e.stopPropagation()
-						@[handler]?.apply @, e
+						@[handler]?.call @, e
 					if selector
 						@node.on(eventType, selector, handleEvent)
 					else
@@ -233,7 +244,11 @@ do (factory = ($) ->
 	class Remix extends Module
 		@include Events
 		@id_counter: 1
-		@create: (definition)->
+		@create: (name, definition)->
+			# TODO: Abstract component that only accepts one child component
+			unless definition?
+				definition = name
+				name = null
 			class NewComp extends Component
 				@include definition
 				#@extend definition
@@ -254,8 +269,16 @@ do (factory = ($) ->
 					comp._optimistRender(data)
 					comp
 				CompProxy.setParent = setParent
+				CompProxy.get = (key) ->
+					key = '$default' unless key
+					parent._getChildComp(NewComp, key)
+				CompProxy.getAll = ->
+					parent._getAllChildComp(NewComp)
 				CompProxy
-			setParent(GlobalComp)
+
+			NewRemix = setParent(GlobalComp)
+			Remix[name] = NewRemix if name
+			NewRemix
 
 
 

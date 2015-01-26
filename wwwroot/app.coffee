@@ -1,5 +1,5 @@
 Remix = require('../Remix')
-Alert = Remix.create
+Alert = Remix.create 'Alert',
 	template: """
 		<h1></h1>
 	"""
@@ -21,8 +21,6 @@ Button = Remix.create
 	onClick: (e) ->
 		if @data?.callback
 			@data?.callback?()
-		alert('BUTTON')
-		@nodeTrigger('button-clicked')
 
 
 	render: (data) ->
@@ -48,10 +46,7 @@ Dialog = Remix.create
 	remixEvent:
 		
 		'button-clicked': 'onCustomEvent'
-		'click, .buttons-container': 'onContainerClick'
 
-	onContainerClick: ->
-		alert('container click')
 
 	onCustomEvent: ->
 		alert('Custom Event')
@@ -62,7 +57,7 @@ Dialog = Remix.create
 
 	render: (data) ->
 		@content.html(data.html)
-		@Button({name: data.button, callback: data.callback}, 'btn1')
+		@Button({name: data.button, callback: data.callback})
 
 	btnCallback: ->
 		alert('btncb')
@@ -73,7 +68,7 @@ Dialog
 	"""
 	button: '确认'
 	callback: ->
-		alert('sdf')
+		Dialog({html: 'CALLBACK!'})
 
 setTimeout ->
 	Dialog 

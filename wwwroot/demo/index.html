@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<script src="js/jquery.min.js"></script>
+	<script src="js/Remix.min.js"></script>
+	<link rel="stylesheet" href="css/bootstrap.min.css">
+</head>
+<body>
+	<script type="text/template" id="dialog-template">
+
+		<div class="modal">
+		  <div class="modal-dialog">
+		    <div class="modal-content">
+		      <div class="modal-header">
+		        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+		        <h4 class="modal-title" ref="title">Modal title</h4>
+		      </div>
+		      <div class="modal-body" ref="body">
+		        <p>One fine body&hellip;</p>
+		      </div>
+		      <div class="modal-footer" ref="footer">
+		      	<span remix="Button" data-title="关闭" data-callback="@closeClick" key="closeBtn"></span>
+		      	<span remix="Button" data-title="确认" data-callback="@okClick" key="okBtn"></span>
+		      </div>
+		    </div><!-- /.modal-content -->
+		  </div><!-- /.modal-dialog -->
+		</div>
+
+	</script>
+	<script>
+		var Button = Remix.create({
+			template: '<button type="button" class="btn btn-default"></button>',
+			remixEvent: {
+				'click': 'onButtonClick'
+			},
+			onButtonClick: function(e) {
+				if(this.clickCallback) {
+					this.clickCallback()
+				}
+			},
+			render: function(data) { // data = <String>
+				this.node.text(data.title)
+				this.clickCallback = data.callback
+			}
+		})
+
+		var Dialog = Remix.create({
+			remixChild: {
+				Button: Button // 绑定父子关系
+			},
+			template: $.trim($('#dialog-template').html()),
+			remixEvent: {
+				'click, .close': 'closeClick'
+			},
+
+			onNodeCreated: function() {
+				// Dialog 把自己放到body下
+				this.appendTo(document.body)
+			},
+
+			render: function(data) { 
+				// data.html 是窗体内容， data.callback是点击确认按钮的回调
+				this.title.text(data.title)
+				this.body.html(data.html)
+				this.okClick = data.callback
+				this.node.hide()
+				this.node.slideDown('slow')
+				this.node.removeClass('fade')
+			},
+
+			closeClick: function() {
+				// 关闭按钮直接关闭自己
+				this.node.slideUp(500, this.proxy(this.destroy))
+			}
+
+		})
+
+		Dialog({
+			title: '我是标题',
+			html:'Bootstrap 官方不提供对第三方 JavaScript 工具库的支持，例如 Prototype 或 jQuery UI。除了 .noConflict 和为事件名称添加命名空间，还可能会有兼容性方面的问题，这就需要你自己来处理了。',
+			callback: function() {
+				alert('点击了确认按钮')
+			}
+		})
+
+
+
+
+
+	</script>
+</body>
+</html>

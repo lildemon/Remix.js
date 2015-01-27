@@ -150,7 +150,9 @@ do (factory = ($) ->
 			child.delegateTo(this)
 
 		include: (el, comp) ->
-			el.empty()
+			unless comp?
+				comp = el
+				el = @node
 			if typeof comp is 'function'
 				inst = comp()
 				el.append inst.node
@@ -159,6 +161,11 @@ do (factory = ($) ->
 				el.append comp.node
 			else
 				el.append comp
+
+		append: -> @include.apply(this, arguments)
+
+		empty: ->
+			@node.empty()
 
 		destroy: (noRemove) ->
 			@onDestroy?()
@@ -296,6 +303,9 @@ do (factory = ($) ->
 					parent._getChildComp(NewComp, key)
 				CompProxy.getAll = ->
 					parent._getAllChildComp(NewComp)
+				CompProxy.destroyAll = ->
+					$.each CompProxy.getAll(), (i, comp) ->
+						comp.destroy()
 				CompProxy
 
 			NewRemix = setParent(GlobalComp)

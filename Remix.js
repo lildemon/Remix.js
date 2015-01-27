@@ -254,7 +254,10 @@
 
       Component.prototype.include = function(el, comp) {
         var inst;
-        el.empty();
+        if (comp == null) {
+          comp = el;
+          el = this.node;
+        }
         if (typeof comp === 'function') {
           inst = comp();
           el.append(inst.node);
@@ -264,6 +267,14 @@
         } else {
           return el.append(comp);
         }
+      };
+
+      Component.prototype.append = function() {
+        return this.include.apply(this, arguments);
+      };
+
+      Component.prototype.empty = function() {
+        return this.node.empty();
       };
 
       Component.prototype.destroy = function(noRemove) {
@@ -505,6 +516,11 @@
           };
           CompProxy.getAll = function() {
             return parent._getAllChildComp(NewComp);
+          };
+          CompProxy.destroyAll = function() {
+            return $.each(CompProxy.getAll(), function(i, comp) {
+              return comp.destroy();
+            });
           };
           return CompProxy;
         };

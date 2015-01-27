@@ -252,6 +252,20 @@
         return child.delegateTo(this);
       };
 
+      Component.prototype.include = function(el, comp) {
+        var inst;
+        el.empty();
+        if (typeof comp === 'function') {
+          inst = comp();
+          el.append(inst.node);
+          return inst.delegateTo(this);
+        } else if (comp instanceof Component) {
+          return el.append(comp.node);
+        } else {
+          return el.append(comp);
+        }
+      };
+
       Component.prototype.destroy = function(noRemove) {
         var $id, comp, key, keyedComp, _ref;
         if (typeof this.onDestroy === "function") {
@@ -409,12 +423,14 @@
             eventType = $.trim(eventType);
             selector = $.trim(selector);
             handleEvent = (function(_this) {
-              return function(e) {
-                var _ref2;
-                e.stopPropagation();
-                return (_ref2 = _this[handler]) != null ? _ref2.call(_this, e) : void 0;
+              return function(handler) {
+                return function(e) {
+                  var _ref2;
+                  e.stopPropagation();
+                  return (_ref2 = _this[handler]) != null ? _ref2.call(_this, e) : void 0;
+                };
               };
-            })(this);
+            })(this)(handler);
             if (selector) {
               _results.push(this.node.on(eventType, selector, handleEvent));
             } else {

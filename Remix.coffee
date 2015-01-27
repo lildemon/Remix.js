@@ -149,6 +149,17 @@ do (factory = ($) ->
 		delegate: (child) ->
 			child.delegateTo(this)
 
+		include: (el, comp) ->
+			el.empty()
+			if typeof comp is 'function'
+				inst = comp()
+				el.append inst.node
+				return inst.delegateTo(this)
+			else if comp instanceof Component
+				el.append comp.node
+			else
+				el.append comp
+
 		destroy: (noRemove) ->
 			@onDestroy?()
 			@node.remove() unless noRemove
@@ -239,9 +250,10 @@ do (factory = ($) ->
 					[eventType, selector] = eventStr.split(',')
 					eventType = $.trim(eventType)
 					selector = $.trim(selector)
-					handleEvent = (e) =>
-						e.stopPropagation()
-						@[handler]?.call @, e
+					handleEvent = do (handler) =>
+						(e) =>
+							e.stopPropagation()
+							@[handler]?.call @, e
 					if selector
 						@node.on(eventType, selector, handleEvent)
 					else

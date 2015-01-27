@@ -97,7 +97,7 @@ do (factory = ($) ->
 					xhr.done (html)=>
 						@templateNode = $($.parseHTML(html))
 					errHandle = =>
-						@templateNode = $($.parseHTML('<span>模版载入出错</span>'))
+						@templateNode = $($.parseHTML("<span>Error loading template: #{templateStr} </span>"))
 					xhr.fail errHandle
 					xhr.complete =>
 						@templateLoaded = true
@@ -139,6 +139,15 @@ do (factory = ($) ->
 		nodeTrigger: ->
 			@node.trigger.apply(@node, arguments)
 
+		delegateTo: (parent) ->
+			@parent._delChildComp(@constructor, @key)
+			parent._regChildComp(this, @constructor, @key)
+			@parent = parent
+			@creator = @creator.setParent(parent)
+			this
+
+		delegate: (child) ->
+			child.delegateTo(this)
 
 		destroy: (noRemove) ->
 			@onDestroy?()
@@ -174,6 +183,7 @@ do (factory = ($) ->
 		_regChildComp: (comp, CompClass, key) ->
 			comps = @child_components or = {}
 			keyedComp = comps[ CompClass.$id ] or= {}
+			throw "child component already exist!" if keyedComp[key]?
 			keyedComp[key] = comp
 			comp
 
@@ -198,7 +208,7 @@ do (factory = ($) ->
 				@_parseEvents()
 				@onNodeCreated()
 			else
-				@node = $($.parseHTML('<span class="loading">正在加载</span>'))
+				@node = $($.parseHTML('<span class="loading">loading..</span>'))
 
 		_parseRefs: ->
 			@node.find('[ref]').each (i, el) =>
@@ -216,7 +226,7 @@ do (factory = ($) ->
 							newVal = do (val) =>
 								=>
 									funName = val.substring(1)
-									if @[funName] then @[funName]() else throw "#{funName} 方法不存在"
+									if @[funName] then @[funName]() else throw "#{funName} does not exist"
 							data[key] = newVal
 
 				$this.replaceWith(@[$this.attr('remix')]($this.data('remix') || $this.data(), $this.attr('key')).node)
@@ -280,6 +290,7 @@ do (factory = ($) ->
 			Remix[name] = NewRemix if name
 			NewRemix
 
+	Remix
 
 
 ) -> # factory become result of above

@@ -90,7 +90,7 @@
     Events.off = Events.unbind;
     Log = {
       trace: true,
-      logPrefix: '(App)',
+      logPrefix: '(Remix)',
       log: function() {
         var args;
         args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
@@ -261,7 +261,11 @@
         }
         if (typeof comp === 'function') {
           inst = comp();
-          el.append(inst.node);
+          if (inst.node) {
+            el.append(inst.node);
+          } else {
+            el.append(inst);
+          }
           return inst.delegateTo(this);
         } else if (comp instanceof Component) {
           return el.append(comp.node);
@@ -355,6 +359,9 @@
         _ref = this._getAllChildComp();
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           comp = _ref[_i];
+          if (comp._preserve) {
+            continue;
+          }
           if (!$.contains(document.documentElement, comp.node[0])) {
             comp.destroy();
           }

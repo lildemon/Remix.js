@@ -47,7 +47,7 @@ do (factory = ($) ->
 	Log =
 		trace: true
 
-		logPrefix: '(App)'
+		logPrefix: '(Remix)'
 
 		log: (args...) ->
 			return unless @trace
@@ -156,7 +156,7 @@ do (factory = ($) ->
 				el = @node
 			if typeof comp is 'function'
 				inst = comp()
-				el.append inst.node
+				if inst.node then el.append inst.node else el.append inst
 				return inst.delegateTo(this)
 			else if comp instanceof Component
 				el.append comp.node

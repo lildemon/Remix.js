@@ -213,6 +213,7 @@
       };
 
       function Component() {
+        this.child_components = {};
         this._parseRemixChild();
         this._parseTemplate();
         this.initialize();
@@ -301,15 +302,21 @@
       };
 
       Component.prototype._optimistRender = function(data) {
-        var node;
+        var whenReady;
         this.data = data;
+        whenReady = (function(_this) {
+          return function() {
+            _this.render(data);
+            return setTimeout(_this.proxy(_this._clearComps), 0);
+          };
+        })(this);
         if (this.constructor.templateLoaded) {
-          node = this.render(data);
+          whenReady();
         } else {
           this.constructor.one('template-loaded', (function(_this) {
             return function() {
               _this._parseTemplate();
-              return _this.render(data);
+              return whenReady();
             };
           })(this));
         }
@@ -322,20 +329,45 @@
       };
 
       Component.prototype._getAllChildComp = function(CompClass) {
-        var comp, key, _ref, _ref1, _results;
-        _ref1 = (_ref = this.child_components) != null ? _ref[CompClass.$id] : void 0;
+        var allComp, comp, id, key, keymap, _ref, _ref1, _ref2;
+        if (CompClass) {
+          _ref1 = (_ref = this.child_components) != null ? _ref[CompClass.$id] : void 0;
+          for (key in _ref1) {
+            comp = _ref1[key];
+            return comp;
+          }
+        } else {
+          allComp = [];
+          _ref2 = this.child_components;
+          for (id in _ref2) {
+            keymap = _ref2[id];
+            for (key in keymap) {
+              comp = keymap[key];
+              allComp.push(comp);
+            }
+          }
+          return allComp;
+        }
+      };
+
+      Component.prototype._clearComps = function() {
+        var comp, _i, _len, _ref, _results;
+        _ref = this._getAllChildComp();
         _results = [];
-        for (key in _ref1) {
-          comp = _ref1[key];
-          _results.push(comp);
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          comp = _ref[_i];
+          if (!$.contains(document.documentElement, comp.node[0])) {
+            _results.push(comp.destroy());
+          } else {
+            _results.push(void 0);
+          }
         }
         return _results;
       };
 
       Component.prototype._regChildComp = function(comp, CompClass, key) {
-        var comps, keyedComp, _name;
-        comps = this.child_components || (this.child_components = {});
-        keyedComp = comps[_name = CompClass.$id] || (comps[_name] = {});
+        var keyedComp, _base, _name;
+        keyedComp = (_base = this.child_components)[_name = CompClass.$id] || (_base[_name] = {});
         if (keyedComp[key] != null) {
           throw "child component already exist!";
         }

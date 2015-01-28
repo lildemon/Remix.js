@@ -110,6 +110,7 @@ do (factory = ($) ->
 
 		constructor: ->
 			# constructor better not override by child component
+			@child_components = {}
 			@_parseRemixChild()
 			@_parseTemplate()
 			@initialize()
@@ -180,13 +181,17 @@ do (factory = ($) ->
 		_optimistRender: (data) ->
 			@data = data
 			# check and get template
+			whenReady = =>
+				@render(data)
+				setTimeout(@proxy(@_clearComps), 0)
+
 			if @constructor.templateLoaded
-				node = @render(data)
+				whenReady()
 				
 			else
 				@constructor.one 'template-loaded', =>
 					@_parseTemplate()
-					@render(data)
+					whenReady()
 
 			@node
 
@@ -195,12 +200,22 @@ do (factory = ($) ->
 			@child_components?[ CompClass.$id ]?[key]
 
 		_getAllChildComp: (CompClass) ->
-			comp for key, comp of @child_components?[ CompClass.$id ]
+			if CompClass
+				return comp for key, comp of @child_components?[ CompClass.$id ]
+			else
+				allComp = []
+				for id, keymap of @child_components
+					for key, comp of keymap
+						allComp.push comp
+				return allComp
 
+		_clearComps: ->
+			for comp in @_getAllChildComp()
+				unless $.contains(document.documentElement, comp.node[0])
+					comp.destroy()
 
 		_regChildComp: (comp, CompClass, key) ->
-			comps = @child_components or = {}
-			keyedComp = comps[ CompClass.$id ] or= {}
+			keyedComp = @child_components[ CompClass.$id ] or= {}
 			throw "child component already exist!" if keyedComp[key]?
 			keyedComp[key] = comp
 			comp

@@ -181,6 +181,10 @@
 
       Component.loadTemplate = function(template) {
         var errHandle, xhr;
+        if (template == null) {
+          this.noTemplate = true;
+          return;
+        }
         if (typeof template === 'string') {
           if (!!~template.indexOf('<')) {
             return this.templateNode = $($.parseHTML(template));
@@ -206,7 +210,7 @@
         } else if (template.nodeType && template.nodeType === 1) {
           return this.templateNode = template;
         } else {
-          return this.noTemplate = true;
+          throw 'What kind of template is this?';
         }
       };
 
@@ -218,6 +222,7 @@
           this.node = $(node);
         }
         this.child_components = {};
+        this.state = {};
         this._parseRemixChild();
         this._parseNode();
         this.initialize();
@@ -311,7 +316,7 @@
 
       Component.prototype._optimistRender = function(state) {
         var whenReady;
-        this.state = state;
+        $.extend(this.state, state);
         whenReady = (function(_this) {
           return function() {
             _this.render(state);
@@ -406,8 +411,8 @@
         nodeReady = (function(_this) {
           return function() {
             _this._parseRefs();
-            _this._parseRemix();
             _this._parseEvents();
+            _this._parseRemix();
             return _this.onNodeCreated();
           };
         })(this);

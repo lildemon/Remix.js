@@ -1,4 +1,7 @@
 do (factory = ($) ->
+
+	# TODO: jQuery helper
+
 	# From Spine.js
 	Events =
 		bind: (ev, callback) ->
@@ -87,6 +90,10 @@ do (factory = ($) ->
 		@include Events
 		@extend Events
 		@loadTemplate = (template) ->
+			unless template?
+				@noTemplate = true
+				return
+				
 			if typeof template is 'string'
 				if !!~template.indexOf('<')
 					@templateNode = $($.parseHTML(template))
@@ -104,7 +111,7 @@ do (factory = ($) ->
 			else if template.nodeType and template.nodeType is 1
 				@templateNode = template
 			else
-				@noTemplate = true
+				throw 'What kind of template is this?'
 
 		constructor: (node) ->
 			# constructor better not override by child component
@@ -112,6 +119,7 @@ do (factory = ($) ->
 				throw 'No template component must created with node' unless node?
 				@node = $(node)
 			@child_components = {}
+			@state = {}
 			@_parseRemixChild()
 			@_parseNode()
 			@initialize()
@@ -180,7 +188,7 @@ do (factory = ($) ->
 			@parent._delChildComp(@constructor, @key)
 
 		_optimistRender: (state) ->
-			@state = state
+			$.extend(@state, state)
 			# check and get template
 			whenReady = =>
 				@render(state)
@@ -234,8 +242,8 @@ do (factory = ($) ->
 		_parseNode: ->
 			nodeReady = =>
 				@_parseRefs()
-				@_parseRemix()
 				@_parseEvents()
+				@_parseRemix()
 				@onNodeCreated()
 
 			if @constructor.templateNode

@@ -86,33 +86,34 @@ do (factory = ($) ->
 	class Component extends Module
 		@include Events
 		@extend Events
-		@templateLoaded = false
-		@loadTemplate = (templateStr) ->
-			if typeof templateStr is 'string'
-				if !!~templateStr.indexOf('<')
-					@templateNode = $($.parseHTML(templateStr))
-					@templateLoaded = true
+		@loadTemplate = (template) ->
+			if typeof template is 'string'
+				if !!~template.indexOf('<')
+					@templateNode = $($.parseHTML(template))
 				else
-					xhr = $.get templateStr
+					xhr = $.get template
 					xhr.done (html)=>
 						@templateNode = $($.parseHTML(html))
 					errHandle = =>
 						@templateNode = $($.parseHTML("<span>Error loading template: #{templateStr} </span>"))
 					xhr.fail errHandle
 					xhr.complete =>
-						@templateLoaded = true
 						@.trigger('template-loaded')
 						
 					#xhr.error errHandle
+			else if template.nodeType and template.nodeType is 1
+				@templateNode = template
 			else
-				#throw '无法解析template'
-				@templateLoaded = true
+				@noTemplate = true
 
-		constructor: ->
+		constructor: (node) ->
 			# constructor better not override by child component
+			if @constructor.noTemplate
+				throw 'No template component must created with node' unless node?
+				@node = $(node)
 			@child_components = {}
 			@_parseRemixChild()
-			@_parseTemplate()
+			@_parseNode()
 			@initialize()
 
 		initialize: ->
@@ -185,12 +186,12 @@ do (factory = ($) ->
 				@render(data)
 				setTimeout(@proxy(@_clearComps), 0)
 
-			if @constructor.templateLoaded
+			if @constructor.templateNode or @constructor.noTemplate
 				whenReady()
 				
 			else
 				@constructor.one 'template-loaded', =>
-					@_parseTemplate()
+					@_parseNode()
 					whenReady()
 
 			@node
@@ -230,18 +231,20 @@ do (factory = ($) ->
 				for key, comp of @remixChild
 					@addChild(key, comp)
 
-		_parseTemplate: ->
-			if @constructor.templateLoaded
-				oldNode = @node
-				if @constructor.templateNode
-					@node = @constructor.templateNode.clone()
-				else
-					@node = $({})
-				oldNode.replaceWith(@node) if oldNode
+		_parseNode: ->
+			nodeReady = =>
 				@_parseRefs()
 				@_parseRemix()
 				@_parseEvents()
 				@onNodeCreated()
+
+			if @constructor.templateNode
+				oldNode = @node
+				@node = @constructor.templateNode.clone()
+				oldNode.replaceWith(@node) if oldNode
+				nodeReady()
+			else if @constructor.noTemplate
+				nodeReady()
 			else
 				@node = $($.parseHTML('<span class="loading">loading..</span>'))
 
@@ -251,6 +254,11 @@ do (factory = ($) ->
 				@[$this.attr('ref')] = $this
 
 		_parseRemix: ->
+
+			parseNode = (childNode) =>
+				
+
+
 			@node.find('[remix]').each (i, el) =>
 				$this = $(el)
 				data = $this.data('remix')
@@ -264,7 +272,10 @@ do (factory = ($) ->
 									if @[funName] then @[funName]() else throw "#{funName} does not exist"
 							data[key] = newVal
 
-				$this.replaceWith(@[$this.attr('remix')]($this.data('remix') || $this.data(), $this.attr('key')).node)
+				# ERROR: must use recursive find instead of direct find
+				remixedComponent = @[$this.attr('remix')]($this.data('remix') || $this.data(), $this.attr('key'), $this[0])
+				unless remixedComponent.constructor.noTemplate
+					$this.replaceWith(remixedComponent.node)
 
 		_parseEvents: ->
 			# I'm lazy..
@@ -302,11 +313,11 @@ do (factory = ($) ->
 				@$id = Remix.id_counter++
 
 			setParent = (parent)->
-				CompProxy = (data, key) ->
+				CompProxy = (data, key, node) ->
 					key = '$default' unless key
 					comp = parent._getChildComp(NewComp, key)
 					unless comp
-						comp = new NewComp()
+						comp = new NewComp(node)
 						comp.parent = parent
 						comp.creator = CompProxy
 						comp.key = key

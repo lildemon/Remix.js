@@ -179,16 +179,13 @@
 
       Component.extend(Events);
 
-      Component.templateLoaded = false;
-
-      Component.loadTemplate = function(templateStr) {
+      Component.loadTemplate = function(template) {
         var errHandle, xhr;
-        if (typeof templateStr === 'string') {
-          if (!!~templateStr.indexOf('<')) {
-            this.templateNode = $($.parseHTML(templateStr));
-            return this.templateLoaded = true;
+        if (typeof template === 'string') {
+          if (!!~template.indexOf('<')) {
+            return this.templateNode = $($.parseHTML(template));
           } else {
-            xhr = $.get(templateStr);
+            xhr = $.get(template);
             xhr.done((function(_this) {
               return function(html) {
                 return _this.templateNode = $($.parseHTML(html));
@@ -202,20 +199,27 @@
             xhr.fail(errHandle);
             return xhr.complete((function(_this) {
               return function() {
-                _this.templateLoaded = true;
                 return _this.trigger('template-loaded');
               };
             })(this));
           }
+        } else if (template.nodeType && template.nodeType === 1) {
+          return this.templateNode = template;
         } else {
-          return this.templateLoaded = true;
+          return this.noTemplate = true;
         }
       };
 
-      function Component() {
+      function Component(node) {
+        if (this.constructor.noTemplate) {
+          if (node == null) {
+            throw 'No template component must created with node';
+          }
+          this.node = $(node);
+        }
         this.child_components = {};
         this._parseRemixChild();
-        this._parseTemplate();
+        this._parseNode();
         this.initialize();
       }
 
@@ -314,12 +318,12 @@
             return setTimeout(_this.proxy(_this._clearComps), 0);
           };
         })(this);
-        if (this.constructor.templateLoaded) {
+        if (this.constructor.templateNode || this.constructor.noTemplate) {
           whenReady();
         } else {
           this.constructor.one('template-loaded', (function(_this) {
             return function() {
-              _this._parseTemplate();
+              _this._parseNode();
               return whenReady();
             };
           })(this));
@@ -397,22 +401,25 @@
         }
       };
 
-      Component.prototype._parseTemplate = function() {
-        var oldNode;
-        if (this.constructor.templateLoaded) {
+      Component.prototype._parseNode = function() {
+        var nodeReady, oldNode;
+        nodeReady = (function(_this) {
+          return function() {
+            _this._parseRefs();
+            _this._parseRemix();
+            _this._parseEvents();
+            return _this.onNodeCreated();
+          };
+        })(this);
+        if (this.constructor.templateNode) {
           oldNode = this.node;
-          if (this.constructor.templateNode) {
-            this.node = this.constructor.templateNode.clone();
-          } else {
-            this.node = $({});
-          }
+          this.node = this.constructor.templateNode.clone();
           if (oldNode) {
             oldNode.replaceWith(this.node);
           }
-          this._parseRefs();
-          this._parseRemix();
-          this._parseEvents();
-          return this.onNodeCreated();
+          return nodeReady();
+        } else if (this.constructor.noTemplate) {
+          return nodeReady();
         } else {
           return this.node = $($.parseHTML('<span class="loading">loading..</span>'));
         }
@@ -431,7 +438,7 @@
       Component.prototype._parseRemix = function() {
         return this.node.find('[remix]').each((function(_this) {
           return function(i, el) {
-            var $this, data, key, newVal, val;
+            var $this, data, key, newVal, remixedComponent, val;
             $this = $(el);
             data = $this.data('remix');
             if (!data) {
@@ -454,7 +461,10 @@
                 }
               }
             }
-            return $this.replaceWith(_this[$this.attr('remix')]($this.data('remix') || $this.data(), $this.attr('key')).node);
+            remixedComponent = _this[$this.attr('remix')]($this.data('remix') || $this.data(), $this.attr('key'), $this[0]);
+            if (!remixedComponent.constructor.noTemplate) {
+              return $this.replaceWith(remixedComponent.node);
+            }
           };
         })(this));
       };
@@ -527,14 +537,14 @@
         })(Component);
         setParent = function(parent) {
           var CompProxy;
-          CompProxy = function(data, key) {
+          CompProxy = function(data, key, node) {
             var comp;
             if (!key) {
               key = '$default';
             }
             comp = parent._getChildComp(NewComp, key);
             if (!comp) {
-              comp = new NewComp();
+              comp = new NewComp(node);
               comp.parent = parent;
               comp.creator = CompProxy;
               comp.key = key;

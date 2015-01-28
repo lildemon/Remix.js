@@ -90,7 +90,7 @@
     Events.off = Events.unbind;
     Log = {
       trace: true,
-      logPrefix: '(App)',
+      logPrefix: '(Remix)',
       log: function() {
         var args;
         args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
@@ -179,16 +179,13 @@
 
       Component.extend(Events);
 
-      Component.templateLoaded = false;
-
-      Component.loadTemplate = function(templateStr) {
+      Component.loadTemplate = function(template) {
         var errHandle, xhr;
-        if (typeof templateStr === 'string') {
-          if (!!~templateStr.indexOf('<')) {
-            this.templateNode = $($.parseHTML(templateStr));
-            return this.templateLoaded = true;
+        if (typeof template === 'string') {
+          if (!!~template.indexOf('<')) {
+            return this.templateNode = $($.parseHTML(template));
           } else {
-            xhr = $.get(templateStr);
+            xhr = $.get(template);
             xhr.done((function(_this) {
               return function(html) {
                 return _this.templateNode = $($.parseHTML(html));
@@ -202,20 +199,27 @@
             xhr.fail(errHandle);
             return xhr.complete((function(_this) {
               return function() {
-                _this.templateLoaded = true;
                 return _this.trigger('template-loaded');
               };
             })(this));
           }
+        } else if (template.nodeType && template.nodeType === 1) {
+          return this.templateNode = template;
         } else {
-          return this.templateLoaded = true;
+          return this.noTemplate = true;
         }
       };
 
-      function Component() {
+      function Component(node) {
+        if (this.constructor.noTemplate) {
+          if (node == null) {
+            throw 'No template component must created with node';
+          }
+          this.node = $(node);
+        }
         this.child_components = {};
         this._parseRemixChild();
-        this._parseTemplate();
+        this._parseNode();
         this.initialize();
       }
 
@@ -261,7 +265,11 @@
         }
         if (typeof comp === 'function') {
           inst = comp();
-          el.append(inst.node);
+          if (inst.node) {
+            el.append(inst.node);
+          } else {
+            el.append(inst);
+          }
           return inst.delegateTo(this);
         } else if (comp instanceof Component) {
           return el.append(comp.node);
@@ -301,21 +309,21 @@
         return this.parent._delChildComp(this.constructor, this.key);
       };
 
-      Component.prototype._optimistRender = function(data) {
+      Component.prototype._optimistRender = function(state) {
         var whenReady;
-        this.data = data;
+        this.state = state;
         whenReady = (function(_this) {
           return function() {
-            _this.render(data);
+            _this.render(state);
             return setTimeout(_this.proxy(_this._clearComps), 0);
           };
         })(this);
-        if (this.constructor.templateLoaded) {
+        if (this.constructor.templateNode || this.constructor.noTemplate) {
           whenReady();
         } else {
           this.constructor.one('template-loaded', (function(_this) {
             return function() {
-              _this._parseTemplate();
+              _this._parseNode();
               return whenReady();
             };
           })(this));
@@ -355,6 +363,9 @@
         _ref = this._getAllChildComp();
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           comp = _ref[_i];
+          if (comp._preserve) {
+            continue;
+          }
           if (!$.contains(document.documentElement, comp.node[0])) {
             comp.destroy();
           }
@@ -390,29 +401,32 @@
         }
       };
 
-      Component.prototype._parseTemplate = function() {
-        var oldNode;
-        if (this.constructor.templateLoaded) {
+      Component.prototype._parseNode = function() {
+        var nodeReady, oldNode;
+        nodeReady = (function(_this) {
+          return function() {
+            _this._parseRefs();
+            _this._parseRemix();
+            _this._parseEvents();
+            return _this.onNodeCreated();
+          };
+        })(this);
+        if (this.constructor.templateNode) {
           oldNode = this.node;
-          if (this.constructor.templateNode) {
-            this.node = this.constructor.templateNode.clone();
-          } else {
-            this.node = $({});
-          }
+          this.node = this.constructor.templateNode.clone();
           if (oldNode) {
             oldNode.replaceWith(this.node);
           }
-          this._parseRefs();
-          this._parseRemix();
-          this._parseEvents();
-          return this.onNodeCreated();
+          return nodeReady();
+        } else if (this.constructor.noTemplate) {
+          return nodeReady();
         } else {
           return this.node = $($.parseHTML('<span class="loading">loading..</span>'));
         }
       };
 
       Component.prototype._parseRefs = function() {
-        return this.node.find('[ref]').each((function(_this) {
+        return this.node.find('[ref]').not(this.node.find('[remix] [ref]')).each((function(_this) {
           return function(i, el) {
             var $this;
             $this = $(el);
@@ -422,34 +436,52 @@
       };
 
       Component.prototype._parseRemix = function() {
-        return this.node.find('[remix]').each((function(_this) {
-          return function(i, el) {
-            var $this, data, key, newVal, val;
-            $this = $(el);
-            data = $this.data('remix');
-            if (!data) {
-              data = $this.data();
-              for (key in data) {
-                val = data[key];
-                if (val.indexOf('@') === 0) {
-                  newVal = (function(val) {
+        var handleRemixNode;
+        handleRemixNode = (function(_this) {
+          return function(el) {
+            var $el, key, propName, remixedComponent, state, val;
+            $el = $(el);
+            state = $el.data();
+            for (key in state) {
+              val = state[key];
+              if (val.indexOf('@') === 0) {
+                propName = val.substring(1);
+                if (_this[propName] != null) {
+                  state[key] = _this.proxy(_this[propName]);
+                } else {
+                  state[key] = (function(propName) {
                     return function() {
-                      var funName;
-                      funName = val.substring(1);
-                      if (_this[funName]) {
-                        return _this[funName]();
+                      if (_this[propName]) {
+                        return _this[propName]();
                       } else {
-                        throw "" + funName + " does not exist";
+                        throw "" + propName + " does not exist";
                       }
                     };
-                  })(val);
-                  data[key] = newVal;
+                  })(propName);
                 }
               }
             }
-            return $this.replaceWith(_this[$this.attr('remix')]($this.data('remix') || $this.data(), $this.attr('key')).node);
+            remixedComponent = _this[$el.attr('remix')](state, $el.attr('key'), el);
+            if (!remixedComponent.constructor.noTemplate) {
+              return $el.replaceWith(remixedComponent.node);
+            }
           };
-        })(this));
+        })(this);
+        return this.node.find('[remix]').not(this.node.find('[remix] [remix]')).each(function() {
+          return handleRemixNode(this);
+        });
+
+        /*
+        			parseNode = (childNode) =>
+        				$(childNode).children().each (i, el) =>
+        					if $(el).is '[remix]'
+        						handleRemixNode(el)
+        					else
+        						 * TODO: performance hit, use nodeType detect?
+        						parseNode(el)
+        
+        			parseNode @node
+         */
       };
 
       Component.prototype._parseEvents = function() {
@@ -520,20 +552,20 @@
         })(Component);
         setParent = function(parent) {
           var CompProxy;
-          CompProxy = function(data, key) {
+          CompProxy = function(state, key, node) {
             var comp;
             if (!key) {
               key = '$default';
             }
             comp = parent._getChildComp(NewComp, key);
             if (!comp) {
-              comp = new NewComp();
+              comp = new NewComp(node);
               comp.parent = parent;
               comp.creator = CompProxy;
               comp.key = key;
               parent._regChildComp(comp, NewComp, key);
             }
-            comp._optimistRender(data);
+            comp._optimistRender(state);
             return comp;
           };
           CompProxy.setParent = setParent;

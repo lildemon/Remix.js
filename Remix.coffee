@@ -125,11 +125,11 @@ do (factory = ($) ->
 				# Panels().on('updated', @proxy(@updateTabs))
 
 		addChild: (name, childMix) ->
-			@[name] = childMix.setParent(@)
+			@[name] = childMix.setParent(this)
 
 		render: ->
 			# use ref, @node to update.. etc
-			#@node
+			# @state will be avaliable
 			@trigger('updated')
 			@node
 
@@ -179,11 +179,11 @@ do (factory = ($) ->
 			@node.off()
 			@parent._delChildComp(@constructor, @key)
 
-		_optimistRender: (data) ->
-			@data = data
+		_optimistRender: (state) ->
+			@state = state
 			# check and get template
 			whenReady = =>
-				@render(data)
+				@render(state)
 				setTimeout(@proxy(@_clearComps), 0)
 
 			if @constructor.templateNode or @constructor.noTemplate
@@ -249,37 +249,47 @@ do (factory = ($) ->
 				@node = $($.parseHTML('<span class="loading">loading..</span>'))
 
 		_parseRefs: ->
-			@node.find('[ref]').each (i, el) =>
+			@node.find('[ref]').not(@node.find('[remix] [ref]')).each (i, el) =>
 				$this = $(el)
 				@[$this.attr('ref')] = $this
 
 		_parseRemix: ->
-
-			parseNode = (childNode) =>
-				
-
-
-			@node.find('[remix]').each (i, el) =>
-				$this = $(el)
-				data = $this.data('remix')
-				unless data
-					data = $this.data()
-					for key, val of data
-						if val.indexOf('@') is 0
-							newVal = do (val) =>
+			handleRemixNode = (el) =>
+				$el = $(el)
+				state = $el.data()
+				for key, val of state
+					if val.indexOf('@') is 0
+						propName = val.substring(1)
+						if @[propName]?
+							state[key] = @proxy(@[propName])
+						else
+							state[key] = do (propName) =>
 								=>
-									funName = val.substring(1)
-									if @[funName] then @[funName]() else throw "#{funName} does not exist"
-							data[key] = newVal
+									if @[propName] then @[propName]() else throw "#{propName} does not exist"
 
-				# ERROR: must use recursive find instead of direct find
-				remixedComponent = @[$this.attr('remix')]($this.data('remix') || $this.data(), $this.attr('key'), $this[0])
+				remixedComponent = @[$el.attr('remix')](state, $el.attr('key'), el)
 				unless remixedComponent.constructor.noTemplate
-					$this.replaceWith(remixedComponent.node)
+					$el.replaceWith(remixedComponent.node)
+
+			# TODO: is there a better selector?
+			@node.find('[remix]').not(@node.find('[remix] [remix]')).each ->
+				handleRemixNode(this)
+
+			###
+			parseNode = (childNode) =>
+				$(childNode).children().each (i, el) =>
+					if $(el).is '[remix]'
+						handleRemixNode(el)
+					else
+						# TODO: performance hit, use nodeType detect?
+						parseNode(el)
+
+			parseNode @node
+			###
 
 		_parseEvents: ->
-			# I'm lazy..
 			# eventDSL should stop propagating events
+			# TODO: bind ref only
 			if @remixEvent and typeof @remixEvent is 'object'
 				for eventStr, handler of @remixEvent
 					[eventType, selector] = eventStr.split(',')
@@ -313,7 +323,7 @@ do (factory = ($) ->
 				@$id = Remix.id_counter++
 
 			setParent = (parent)->
-				CompProxy = (data, key, node) ->
+				CompProxy = (state, key, node) ->
 					key = '$default' unless key
 					comp = parent._getChildComp(NewComp, key)
 					unless comp
@@ -323,7 +333,7 @@ do (factory = ($) ->
 						comp.key = key
 						parent._regChildComp(comp, NewComp, key)
 
-					comp._optimistRender(data)
+					comp._optimistRender(state)
 					comp
 				CompProxy.setParent = setParent
 				CompProxy.get = (key) ->

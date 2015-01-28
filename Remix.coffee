@@ -211,8 +211,10 @@ do (factory = ($) ->
 
 		_clearComps: ->
 			for comp in @_getAllChildComp()
+				continue if comp._preserve
 				unless $.contains(document.documentElement, comp.node[0])
 					comp.destroy()
+			null
 
 		_regChildComp: (comp, CompClass, key) ->
 			keyedComp = @child_components[ CompClass.$id ] or= {}

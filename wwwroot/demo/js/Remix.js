@@ -351,18 +351,15 @@
       };
 
       Component.prototype._clearComps = function() {
-        var comp, _i, _len, _ref, _results;
+        var comp, _i, _len, _ref;
         _ref = this._getAllChildComp();
-        _results = [];
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           comp = _ref[_i];
           if (!$.contains(document.documentElement, comp.node[0])) {
-            _results.push(comp.destroy());
-          } else {
-            _results.push(void 0);
+            comp.destroy();
           }
         }
-        return _results;
+        return null;
       };
 
       Component.prototype._regChildComp = function(comp, CompClass, key) {

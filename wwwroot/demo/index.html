@@ -40,6 +40,9 @@
 					this.clickCallback()
 				}
 			},
+			onDestroy: function() {
+				console.log('Button Destroy!')
+			},
 			render: function(data) { // data = <String>
 				this.node.text(data.title)
 				this.clickCallback = data.callback

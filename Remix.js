@@ -444,7 +444,7 @@
         var handleRemixNode;
         handleRemixNode = (function(_this) {
           return function(el) {
-            var $el, key, propName, remixedComponent, state, val;
+            var $el, RemixClass, key, propName, remixedComponent, state, val;
             $el = $(el);
             state = $el.data();
             for (key in state) {
@@ -466,7 +466,11 @@
                 }
               }
             }
-            remixedComponent = _this[$el.attr('remix')](state, $el.attr('key'), el);
+            RemixClass = _this[$el.attr('remix')];
+            if (RemixClass == null) {
+              throw "Remixing child \"" + ($el.attr('remix')) + "\" does not exist";
+            }
+            remixedComponent = RemixClass(state, $el.attr('key'), el);
             if (!remixedComponent.constructor.noTemplate) {
               return $el.replaceWith(remixedComponent.node);
             }
@@ -475,18 +479,6 @@
         return this.node.find('[remix]').not(this.node.find('[remix] [remix]')).each(function() {
           return handleRemixNode(this);
         });
-
-        /*
-        			parseNode = (childNode) =>
-        				$(childNode).children().each (i, el) =>
-        					if $(el).is '[remix]'
-        						handleRemixNode(el)
-        					else
-        						 * TODO: performance hit, use nodeType detect?
-        						parseNode(el)
-        
-        			parseNode @node
-         */
       };
 
       Component.prototype._parseEvents = function() {

@@ -93,7 +93,7 @@ do (factory = ($) ->
 			unless template?
 				@noTemplate = true
 				return
-				
+
 			if typeof template is 'string'
 				if !!~template.indexOf('<')
 					@templateNode = $($.parseHTML(template))
@@ -275,7 +275,10 @@ do (factory = ($) ->
 								=>
 									if @[propName] then @[propName]() else throw "#{propName} does not exist"
 
-				remixedComponent = @[$el.attr('remix')](state, $el.attr('key'), el)
+				RemixClass = @[$el.attr('remix')]
+				unless RemixClass?
+					throw "Remixing child \"#{$el.attr('remix')}\" does not exist"
+				remixedComponent = RemixClass(state, $el.attr('key'), el)
 				unless remixedComponent.constructor.noTemplate
 					$el.replaceWith(remixedComponent.node)
 
@@ -283,17 +286,7 @@ do (factory = ($) ->
 			@node.find('[remix]').not(@node.find('[remix] [remix]')).each ->
 				handleRemixNode(this)
 
-			###
-			parseNode = (childNode) =>
-				$(childNode).children().each (i, el) =>
-					if $(el).is '[remix]'
-						handleRemixNode(el)
-					else
-						# TODO: performance hit, use nodeType detect?
-						parseNode(el)
-
-			parseNode @node
-			###
+			
 
 		_parseEvents: ->
 			# eventDSL should stop propagating events

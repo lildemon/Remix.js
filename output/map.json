@@ -1,0 +1,57 @@
+{
+    "res": {
+        "app.coffee": {
+            "uri": "/app.js",
+            "type": "js"
+        },
+        "components/input.coffee": {
+            "uri": "/components/input.js",
+            "type": "js"
+        },
+        "demo/css/bootstrap-tagsinput.css": {
+            "uri": "/demo/css/bootstrap-tagsinput.css",
+            "type": "css"
+        },
+        "demo/css/bootstrap-theme.css": {
+            "uri": "/demo/css/bootstrap-theme.css",
+            "type": "css"
+        },
+        "demo/css/bootstrap-theme.min.css": {
+            "uri": "/demo/css/bootstrap-theme.min.css",
+            "type": "css"
+        },
+        "demo/css/bootstrap.css": {
+            "uri": "/demo/css/bootstrap.css",
+            "type": "css"
+        },
+        "demo/css/bootstrap.min.css": {
+            "uri": "/demo/css/bootstrap.min.css",
+            "type": "css"
+        },
+        "demo/js/Remix.js": {
+            "uri": "/demo/js/Remix.js",
+            "type": "js"
+        },
+        "demo/js/Remix.min.js": {
+            "uri": "/demo/js/Remix.min.js",
+            "type": "js"
+        },
+        "demo/js/jquery.min.js": {
+            "uri": "/demo/js/jquery.min.js",
+            "type": "js"
+        },
+        "packed/app.js": {
+            "uri": "/packed/app.js",
+            "type": "js"
+        },
+        "packed/inclusion.js": {
+            "uri": "/packed/inclusion.js",
+            "type": "js"
+        },
+        "tests/inclusion.coffee": {
+            "uri": "/tests/inclusion.js",
+            "type": "js"
+        }
+    },
+    "pkg": {}
+}

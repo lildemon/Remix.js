@@ -120,6 +120,8 @@ do (factory = ($) ->
 				@node = $(node)
 			@child_components = {}
 			@state = {}
+			@refs = {}
+			@_initialRender = true
 			@_parseRemixChild()
 			@_parseNode()
 			@initialize()
@@ -134,6 +136,9 @@ do (factory = ($) ->
 
 		addChild: (name, childMix) ->
 			@[name] = childMix.setParent(this)
+
+		setState: (state) ->
+			@_optimistRender(state)
 
 		render: ->
 			# use ref, @node to update.. etc
@@ -159,7 +164,7 @@ do (factory = ($) ->
 		delegate: (child) ->
 			child.delegateTo(this)
 
-		include: (el, comp) ->
+		append: (el, comp) ->
 			unless comp?
 				comp = el
 				el = @node
@@ -172,7 +177,9 @@ do (factory = ($) ->
 			else
 				el.append comp
 
-		append: -> @include.apply(this, arguments)
+		include: (el) ->
+			el.empty()
+			@append.apply(this, arguments)
 
 		empty: ->
 			@node.empty()
@@ -191,6 +198,9 @@ do (factory = ($) ->
 			$.extend(@state, state)
 			# check and get template
 			whenReady = =>
+				if @_initialRender
+					@initialRender?(state)
+					@_initialRender = false
 				@render(state)
 				setTimeout(@proxy(@_clearComps), 0)
 
@@ -259,7 +269,7 @@ do (factory = ($) ->
 		_parseRefs: ->
 			@node.find('[ref]').not(@node.find('[remix] [ref]')).each (i, el) =>
 				$this = $(el)
-				@[$this.attr('ref')] = $this
+				@refs[$this.attr('ref')] = $this
 
 		_parseRemix: ->
 			handleRemixNode = (el) =>
@@ -293,17 +303,26 @@ do (factory = ($) ->
 			# TODO: bind ref only
 			if @remixEvent and typeof @remixEvent is 'object'
 				for eventStr, handler of @remixEvent
-					[eventType, selector] = eventStr.split(',')
+					[eventType, selector, refProp] = eventStr.split(',')
 					eventType = $.trim(eventType)
-					selector = $.trim(selector)
+					if selector?
+						selector = $.trim(selector)
+						unless refProp?
+							refProp = selector
+							selector = null
+						else
+							refProp = $.trim(refProp)
 					handleEvent = do (handler) =>
 						(e) =>
 							e.stopPropagation()
 							@[handler]?.call @, e
+					ref = if refProp then @refs[refProp] else @node
+					unless ref?
+						throw "Event's referencing node \"#{refProp}\" does not exist"
 					if selector
-						@node.on(eventType, selector, handleEvent)
+						ref.on(eventType, selector, handleEvent)
 					else
-						@node.on(eventType, handleEvent)
+						ref.on(eventType, handleEvent)
 
 
 

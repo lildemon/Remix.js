@@ -164,9 +164,8 @@ do (factory = ($) ->
 		delegate: (child) ->
 			child.delegateTo(this)
 
-		append: (el, comp) ->
-			unless comp?
-				comp = el
+		append: (comp, el) ->
+			unless el?
 				el = @node
 			if typeof comp is 'function'
 				inst = comp()
@@ -177,8 +176,9 @@ do (factory = ($) ->
 			else
 				el.append comp
 
-		include: (el) ->
-			el.empty()
+		include: (comp, el) ->
+			if el?
+				el.empty?()
 			@append.apply(this, arguments)
 
 		empty: ->

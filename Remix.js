@@ -268,10 +268,9 @@
         return child.delegateTo(this);
       };
 
-      Component.prototype.append = function(el, comp) {
+      Component.prototype.append = function(comp, el) {
         var inst;
-        if (comp == null) {
-          comp = el;
+        if (el == null) {
           el = this.node;
         }
         if (typeof comp === 'function') {
@@ -289,8 +288,12 @@
         }
       };
 
-      Component.prototype.include = function(el) {
-        el.empty();
+      Component.prototype.include = function(comp, el) {
+        if (el != null) {
+          if (typeof el.empty === "function") {
+            el.empty();
+          }
+        }
         return this.append.apply(this, arguments);
       };
 

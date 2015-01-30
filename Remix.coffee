@@ -380,5 +380,5 @@ do (factory = ($) ->
 	else if typeof exports is 'object'
 		module.exports = factory(require('jquery'))
 	else
-		@['Remix'] = factory(jQuery)
+		@['Remix'] = factory(if (typeof jQuery == 'undefined') then Zepto else jQuery)
 	return

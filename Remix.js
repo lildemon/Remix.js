@@ -11,7 +11,7 @@
     } else if (typeof exports === 'object') {
       module.exports = factory(require('jquery'));
     } else {
-      this['Remix'] = factory(jQuery);
+      this['Remix'] = factory(typeof jQuery === 'undefined' ? Zepto : jQuery);
     }
   })(function($) {
     var Component, Events, GlobalComp, Log, Module, Remix, moduleKeywords;

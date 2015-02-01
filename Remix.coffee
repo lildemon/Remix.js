@@ -1,6 +1,6 @@
 do (factory = ($) ->
 
-	# TODO: jQuery helper
+	# TODO: jQuery helper, remix-router
 
 	# From Spine.js
 	Events =
@@ -195,7 +195,10 @@ do (factory = ($) ->
 			@parent._delChildComp(@constructor, @key)
 
 		_optimistRender: (state) ->
-			$.extend(@state, state)
+			if typeof state is 'object'
+				$.extend(@state, state)
+			else
+				@state = state
 			# check and get template
 			whenReady = =>
 				if @_initialRender
@@ -300,7 +303,6 @@ do (factory = ($) ->
 
 		_parseEvents: ->
 			# eventDSL should stop propagating events
-			# TODO: bind ref only
 			if @remixEvent and typeof @remixEvent is 'object'
 				for eventStr, handler of @remixEvent
 					[eventType, selector, refProp] = eventStr.split(',')
@@ -323,6 +325,10 @@ do (factory = ($) ->
 						ref.on(eventType, selector, handleEvent)
 					else
 						ref.on(eventType, handleEvent)
+
+			else if typeof @remixEvent is 'function'
+				@remixEvent = @remixEvent()
+				@_parseEvents()
 
 
 
@@ -356,6 +362,9 @@ do (factory = ($) ->
 					comp._optimistRender(state)
 					comp
 				CompProxy.setParent = setParent
+				CompProxy.bindNode = (node, key) ->
+					CompProxy({}, key, node)
+					CompProxy
 				CompProxy.get = (key) ->
 					key = '$default' unless key
 					parent._getChildComp(NewComp, key)

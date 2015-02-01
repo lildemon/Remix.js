@@ -326,7 +326,11 @@
 
       Component.prototype._optimistRender = function(state) {
         var whenReady;
-        $.extend(this.state, state);
+        if (typeof state === 'object') {
+          $.extend(this.state, state);
+        } else {
+          this.state = state;
+        }
         whenReady = (function(_this) {
           return function() {
             if (_this._initialRender) {
@@ -535,6 +539,9 @@
             }
           }
           return _results;
+        } else if (typeof this.remixEvent === 'function') {
+          this.remixEvent = this.remixEvent();
+          return this._parseEvents();
         }
       };
 
@@ -594,6 +601,10 @@
             return comp;
           };
           CompProxy.setParent = setParent;
+          CompProxy.bindNode = function(node, key) {
+            CompProxy({}, key, node);
+            return CompProxy;
+          };
           CompProxy.get = function(key) {
             if (!key) {
               key = '$default';

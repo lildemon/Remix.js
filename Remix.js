@@ -464,7 +464,7 @@
         var handleRemixNode;
         handleRemixNode = (function(_this) {
           return function(el) {
-            var $el, RemixClass, key, propName, remixedComponent, state, val;
+            var $el, RemixClass, key, propName, refName, remixedComponent, state, val;
             $el = $(el);
             state = $el.data();
             for (key in state) {
@@ -492,7 +492,11 @@
             }
             remixedComponent = RemixClass(state, $el.attr('key'), el);
             if (!remixedComponent.constructor.noTemplate) {
-              return $el.replaceWith(remixedComponent.node);
+              $el.replaceWith(remixedComponent.node);
+              refName = $el.attr('ref');
+              if (refName) {
+                return _this.refs[refName] = remixedComponent.node;
+              }
             }
           };
         })(this);

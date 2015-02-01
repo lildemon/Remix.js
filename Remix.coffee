@@ -294,6 +294,8 @@ do (factory = ($) ->
 				remixedComponent = RemixClass(state, $el.attr('key'), el)
 				unless remixedComponent.constructor.noTemplate
 					$el.replaceWith(remixedComponent.node)
+					refName = $el.attr 'ref'
+					@refs[refName] = remixedComponent.node if refName
 
 			# TODO: is there a better selector?
 			@node.find('[remix]').not(@node.find('[remix] [remix]')).each ->

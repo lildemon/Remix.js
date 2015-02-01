@@ -431,8 +431,8 @@
         nodeReady = (function(_this) {
           return function() {
             _this._parseRefs();
-            _this._parseEvents();
             _this._parseRemix();
+            _this._parseEvents();
             return _this.onNodeCreated();
           };
         })(this);
@@ -464,7 +464,7 @@
         var handleRemixNode;
         handleRemixNode = (function(_this) {
           return function(el) {
-            var $el, RemixClass, key, propName, refName, remixedComponent, state, val;
+            var $el, RemixClass, className, key, propName, refName, remixedComponent, state, val, _ref;
             $el = $(el);
             state = $el.data();
             for (key in state) {
@@ -486,9 +486,15 @@
                 }
               }
             }
-            RemixClass = _this[$el.attr('remix')];
+            className = $el.attr('remix');
+            RemixClass = _this[className];
             if (RemixClass == null) {
-              throw "Remixing child \"" + ($el.attr('remix')) + "\" does not exist";
+              RemixClass = (_ref = Remix[className]) != null ? typeof _ref.setParent === "function" ? _ref.setParent(_this) : void 0 : void 0;
+              if (RemixClass != null) {
+                _this[className] = RemixClass;
+              } else {
+                throw "Remixing child \"" + className + "\" does not exist";
+              }
             }
             remixedComponent = RemixClass(state, $el.attr('key'), el);
             if (!remixedComponent.constructor.noTemplate) {

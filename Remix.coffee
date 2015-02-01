@@ -255,8 +255,8 @@ do (factory = ($) ->
 		_parseNode: ->
 			nodeReady = =>
 				@_parseRefs()
-				@_parseEvents()
 				@_parseRemix()
+				@_parseEvents()
 				@onNodeCreated()
 
 			if @constructor.templateNode
@@ -287,10 +287,14 @@ do (factory = ($) ->
 							state[key] = do (propName) =>
 								=>
 									if @[propName] then @[propName]() else throw "#{propName} does not exist"
-
-				RemixClass = @[$el.attr('remix')]
+				className = $el.attr('remix')
+				RemixClass = @[className]
 				unless RemixClass?
-					throw "Remixing child \"#{$el.attr('remix')}\" does not exist"
+					RemixClass = Remix[className]?.setParent?(this)
+					if RemixClass?
+						@[className] = RemixClass
+					else
+						throw "Remixing child \"#{className}\" does not exist"
 				remixedComponent = RemixClass(state, $el.attr('key'), el)
 				unless remixedComponent.constructor.noTemplate
 					$el.replaceWith(remixedComponent.node)

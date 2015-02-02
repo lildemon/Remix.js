@@ -223,7 +223,7 @@ do (factory = ($) ->
 
 		_getAllChildComp: (CompClass) ->
 			if CompClass
-				return comp for key, comp of @child_components?[ CompClass.$id ]
+				comp for key, comp of @child_components?[ CompClass.$id ]
 			else
 				allComp = []
 				for id, keymap of @child_components
@@ -290,9 +290,8 @@ do (factory = ($) ->
 				className = $el.attr('remix')
 				RemixClass = @[className]
 				unless RemixClass?
-					RemixClass = Remix[className]?.setParent?(this)
-					if RemixClass?
-						@[className] = RemixClass
+					if Remix[className]?
+						RemixClass = @addChild(className, Remix[className])
 					else
 						throw "Remixing child \"#{className}\" does not exist"
 				remixedComponent = RemixClass(state, $el.attr('key'), el)

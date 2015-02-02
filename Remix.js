@@ -362,13 +362,15 @@
       };
 
       Component.prototype._getAllChildComp = function(CompClass) {
-        var allComp, comp, id, key, keymap, _ref, _ref1, _ref2;
+        var allComp, comp, id, key, keymap, _ref, _ref1, _ref2, _results;
         if (CompClass) {
           _ref1 = (_ref = this.child_components) != null ? _ref[CompClass.$id] : void 0;
+          _results = [];
           for (key in _ref1) {
             comp = _ref1[key];
-            return comp;
+            _results.push(comp);
           }
+          return _results;
         } else {
           allComp = [];
           _ref2 = this.child_components;
@@ -464,7 +466,7 @@
         var handleRemixNode;
         handleRemixNode = (function(_this) {
           return function(el) {
-            var $el, RemixClass, className, key, propName, refName, remixedComponent, state, val, _ref;
+            var $el, RemixClass, className, key, propName, refName, remixedComponent, state, val;
             $el = $(el);
             state = $el.data();
             for (key in state) {
@@ -489,9 +491,8 @@
             className = $el.attr('remix');
             RemixClass = _this[className];
             if (RemixClass == null) {
-              RemixClass = (_ref = Remix[className]) != null ? typeof _ref.setParent === "function" ? _ref.setParent(_this) : void 0 : void 0;
-              if (RemixClass != null) {
-                _this[className] = RemixClass;
+              if (Remix[className] != null) {
+                RemixClass = _this.addChild(className, Remix[className]);
               } else {
                 throw "Remixing child \"" + className + "\" does not exist";
               }

@@ -453,7 +453,13 @@
       };
 
       Component.prototype._parseRefs = function() {
-        return this.node.find('[ref]').not(this.node.find('[remix] [ref]')).each((function(_this) {
+        var refnodes, remixnodes;
+        refnodes = this.node.find('[ref]');
+        remixnodes = this.node.find('[remix]');
+        if (remixnodes.length) {
+          refnodes = refnodes.not(remixnodes.find('[ref]'));
+        }
+        return refnodes.each((function(_this) {
           return function(i, el) {
             var $this;
             $this = $(el);
@@ -466,9 +472,14 @@
         var handleRemixNode;
         handleRemixNode = (function(_this) {
           return function(el) {
-            var $el, RemixClass, className, key, propName, refName, remixedComponent, state, val;
+            var $el, RemixClass, className, e, key, propName, refName, remixedComponent, state, val;
             $el = $(el);
-            state = $el.data();
+            try {
+              state = $el.data();
+            } catch (_error) {
+              e = _error;
+              throw 'This build of Zepto does not support data() -> object';
+            }
             for (key in state) {
               val = state[key];
               if (val.indexOf('@') === 0) {
@@ -533,9 +544,12 @@
             handleEvent = (function(_this) {
               return function(handler) {
                 return function(e) {
-                  var _ref2;
-                  e.stopPropagation();
-                  return (_ref2 = _this[handler]) != null ? _ref2.call(_this, e) : void 0;
+                  var selfHandler;
+                  selfHandler = _this[handler];
+                  if (selfHandler == null) {
+                    throw "handler " + handler + " not found";
+                  }
+                  return selfHandler != null ? selfHandler.call(_this, e) : void 0;
                 };
               };
             })(this)(handler);
@@ -597,6 +611,7 @@
           var CompProxy;
           CompProxy = function(state, key, node) {
             var comp;
+            node = $(note).get(0);
             if (!key) {
               key = '$default';
             }

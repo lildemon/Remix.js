@@ -270,14 +270,21 @@ do (factory = ($) ->
 				@node = $($.parseHTML('<span class="loading">loading..</span>'))
 
 		_parseRefs: ->
-			@node.find('[ref]').not(@node.find('[remix] [ref]')).each (i, el) =>
+			refnodes = @node.find('[ref]')
+			remixnodes = @node.find('[remix]')
+			if remixnodes.length
+				refnodes = refnodes.not(remixnodes.find('[ref]'))
+			refnodes.each (i, el) =>
 				$this = $(el)
 				@refs[$this.attr('ref')] = $this
 
 		_parseRemix: ->
 			handleRemixNode = (el) =>
 				$el = $(el)
-				state = $el.data()
+				try
+					state = $el.data()
+				catch e
+					throw 'This build of Zepto does not support data() -> object'
 				for key, val of state
 					if val.indexOf('@') is 0
 						propName = val.substring(1)
@@ -321,8 +328,12 @@ do (factory = ($) ->
 							refProp = $.trim(refProp)
 					handleEvent = do (handler) =>
 						(e) =>
-							e.stopPropagation()
-							@[handler]?.call @, e
+							# In zepto, tap event is capture on body, if touch event is stopPropagation, tap event will never fired
+							# e.stopPropagation()
+							selfHandler = @[handler]
+							unless selfHandler?
+								throw "handler #{handler} not found"
+							selfHandler?.call @, e
 					ref = if refProp then @refs[refProp] else @node
 					unless ref?
 						throw "Event's referencing node \"#{refProp}\" does not exist"
@@ -355,6 +366,7 @@ do (factory = ($) ->
 
 			setParent = (parent)->
 				CompProxy = (state, key, node) ->
+					node = $(note).get(0)
 					key = '$default' unless key
 					comp = parent._getChildComp(NewComp, key)
 					unless comp

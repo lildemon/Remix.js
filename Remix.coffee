@@ -334,7 +334,7 @@ do (factory = ($) ->
 							unless selfHandler?
 								throw "handler #{handler} not found"
 							selfHandler?.call @, e
-					ref = if refProp then @refs[refProp] else @node
+					ref = if refProp then (if refProp is '@' then @node else @refs[refProp]) else @node
 					unless ref?
 						throw "Event's referencing node \"#{refProp}\" does not exist"
 					if selector
@@ -366,7 +366,7 @@ do (factory = ($) ->
 
 			setParent = (parent)->
 				CompProxy = (state, key, node) ->
-					node = $(note).get(0)
+					node = $(node).get(0)
 					key = '$default' unless key
 					comp = parent._getChildComp(NewComp, key)
 					unless comp

@@ -553,7 +553,7 @@
                 };
               };
             })(this)(handler);
-            ref = refProp ? this.refs[refProp] : this.node;
+            ref = refProp ? (refProp === '@' ? this.node : this.refs[refProp]) : this.node;
             if (ref == null) {
               throw "Event's referencing node \"" + refProp + "\" does not exist";
             }
@@ -611,7 +611,7 @@
           var CompProxy;
           CompProxy = function(state, key, node) {
             var comp;
-            node = $(note).get(0);
+            node = $(node).get(0);
             if (!key) {
               key = '$default';
             }

@@ -115,9 +115,11 @@ do (factory = ($) ->
 
 		constructor: (node) ->
 			# constructor better not override by child component
-			if @constructor.noTemplate
-				throw 'No template component must created with node' unless node?
+			if node
 				@node = $(node)
+			else if @constructor.noTemplate
+				throw 'No template component must created with node'
+
 			@child_components = {}
 			@state = {}
 			@refs = {}

@@ -215,11 +215,10 @@
       };
 
       function Component(node) {
-        if (this.constructor.noTemplate) {
-          if (node == null) {
-            throw 'No template component must created with node';
-          }
+        if (node) {
           this.node = $(node);
+        } else if (this.constructor.noTemplate) {
+          throw 'No template component must created with node';
         }
         this.child_components = {};
         this.state = {};

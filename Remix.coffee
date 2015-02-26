@@ -170,6 +170,7 @@ do (factory = ($) ->
 			unless el?
 				el = @node
 			if typeof comp is 'function'
+				# NOTICE: Edge case when comp with default key already 'appended', which will be rerendered and append to new position
 				inst = comp()
 				if inst.node then el.append inst.node else el.append inst
 				return inst.delegateTo(this)

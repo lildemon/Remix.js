@@ -121,15 +121,20 @@ do (factory = ($) ->
 				throw 'No template component must created with node'
 
 			@child_components = {}
-			@state = {}
+			@state = @_getInitialState()
 			@refs = {}
 			@_initialRender = true
 			@_parseRemixChild()
 			@_parseNode()
+
+			@_runMixinMethod('initialize')
 			@initialize()
 
 		initialize: ->
 			# only Remix Child can be garenteed to be used
+
+		getInitialState: ->
+			# blank
 
 		onNodeCreated: ->
 			# child component should use refs and assume event is alive
@@ -137,6 +142,7 @@ do (factory = ($) ->
 				# Panels().on('updated', @proxy(@updateTabs))
 
 		addChild: (name, childMix) ->
+			# add a Remix Component class to this instance, make this instance as its parent
 			@[name] = childMix.setParent(this)
 
 		setState: (state) ->
@@ -151,7 +157,6 @@ do (factory = ($) ->
 		appendTo: (node) ->
 			@node.appendTo(node)
 			this
-
 
 		nodeTrigger: ->
 			@node.trigger.apply(@node, arguments)
@@ -188,6 +193,7 @@ do (factory = ($) ->
 			@node.empty()
 
 		destroy: (noRemove) ->
+			@_runMixinMethod('onDestroy')
 			@onDestroy?()
 			@node.remove() unless noRemove
 			for own $id, keyedComp of @child_components
@@ -196,6 +202,13 @@ do (factory = ($) ->
 			@off()
 			@node.off()
 			@parent._delChildComp(@constructor, @key)
+
+		_getInitialState: ->
+			state = {}
+			for s in @_runMixinMethod('getInitialState')
+				$.extend(state, s)
+			$.extend(state, @getInitialState())
+			state
 
 		_optimistRender: (state) ->
 			if typeof state is 'object'
@@ -207,6 +220,7 @@ do (factory = ($) ->
 				if @_initialRender
 					@initialRender?(state)
 					@_initialRender = false
+				@_runMixinMethod('render', state)
 				@render(state)
 				setTimeout(@proxy(@_clearComps), 0)
 
@@ -260,6 +274,8 @@ do (factory = ($) ->
 				@_parseRefs()
 				@_parseRemix()
 				@_parseEvents()
+
+				@_runMixinMethod('onNodeCreated')
 				@onNodeCreated()
 
 			if @constructor.templateNode
@@ -349,6 +365,9 @@ do (factory = ($) ->
 				@remixEvent = @remixEvent()
 				@_parseEvents()
 
+		_runMixinMethod: (name, args...) ->
+			for mixin in @mixins
+				mixin[name]?.apply?(this, args)
 
 
 	GlobalComp = new Component()
@@ -361,6 +380,15 @@ do (factory = ($) ->
 			unless definition?
 				definition = name
 				name = null
+			unless $.isArray(definition.mixins)
+				definition.mixins = if definition.mixins? then [definition.mixins] else []
+
+			# defer from React.js, definition's method overrides mixin's
+			for mixin in definition.mixins
+				for own key, val of mixin
+					unless definition[key]?
+						definition[key] = val
+
 			class NewComp extends Component
 				@include definition
 				#@extend definition

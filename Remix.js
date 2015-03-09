@@ -221,15 +221,18 @@
           throw 'No template component must created with node';
         }
         this.child_components = {};
-        this.state = {};
+        this.state = this._getInitialState();
         this.refs = {};
         this._initialRender = true;
         this._parseRemixChild();
         this._parseNode();
+        this._runMixinMethod('initialize');
         this.initialize();
       }
 
       Component.prototype.initialize = function() {};
+
+      Component.prototype.getInitialState = function() {};
 
       Component.prototype.onNodeCreated = function() {};
 
@@ -302,6 +305,7 @@
 
       Component.prototype.destroy = function(noRemove) {
         var $id, comp, key, keyedComp, _ref;
+        this._runMixinMethod('onDestroy');
         if (typeof this.onDestroy === "function") {
           this.onDestroy();
         }
@@ -323,6 +327,18 @@
         return this.parent._delChildComp(this.constructor, this.key);
       };
 
+      Component.prototype._getInitialState = function() {
+        var s, state, _i, _len, _ref;
+        state = {};
+        _ref = this._runMixinMethod('getInitialState');
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          s = _ref[_i];
+          $.extend(state, s);
+        }
+        $.extend(state, this.getInitialState());
+        return state;
+      };
+
       Component.prototype._optimistRender = function(state) {
         var whenReady;
         if (typeof state === 'object') {
@@ -338,6 +354,7 @@
               }
               _this._initialRender = false;
             }
+            _this._runMixinMethod('render', state);
             _this.render(state);
             return setTimeout(_this.proxy(_this._clearComps), 0);
           };
@@ -434,6 +451,7 @@
             _this._parseRefs();
             _this._parseRemix();
             _this._parseEvents();
+            _this._runMixinMethod('onNodeCreated');
             return _this.onNodeCreated();
           };
         })(this);
@@ -569,6 +587,18 @@
         }
       };
 
+      Component.prototype._runMixinMethod = function() {
+        var args, mixin, name, _i, _len, _ref, _ref1, _results;
+        name = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+        _ref = this.mixins;
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          mixin = _ref[_i];
+          _results.push((_ref1 = mixin[name]) != null ? typeof _ref1.apply === "function" ? _ref1.apply(this, args) : void 0 : void 0);
+        }
+        return _results;
+      };
+
       return Component;
 
     })(Module);
@@ -585,10 +615,24 @@
       Remix.id_counter = 1;
 
       Remix.create = function(name, definition) {
-        var NewComp, NewRemix, setParent;
+        var NewComp, NewRemix, key, mixin, setParent, val, _i, _len, _ref;
         if (definition == null) {
           definition = name;
           name = null;
+        }
+        if (!$.isArray(definition.mixins)) {
+          definition.mixins = definition.mixins != null ? [definition.mixins] : [];
+        }
+        _ref = definition.mixins;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          mixin = _ref[_i];
+          for (key in mixin) {
+            if (!__hasProp.call(mixin, key)) continue;
+            val = mixin[key];
+            if (definition[key] == null) {
+              definition[key] = val;
+            }
+          }
         }
         NewComp = (function(_super1) {
           __extends(NewComp, _super1);

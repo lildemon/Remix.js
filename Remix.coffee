@@ -383,10 +383,12 @@ do (factory = ($) ->
 			unless $.isArray(definition.mixins)
 				definition.mixins = if definition.mixins? then [definition.mixins] else []
 
-			# defer from React.js, definition's method overrides mixin's
+			# defferent from React.js, definition's method overrides mixin's
+			# mixin provides dynamic behavior of component
+			# http://blog.krawaller.se/posts/a-react-encapsulation-pattern/
 			for mixin in definition.mixins
 				for own key, val of mixin
-					unless definition[key]?
+					unless Component::[key]?
 						definition[key] = val
 
 			class NewComp extends Component

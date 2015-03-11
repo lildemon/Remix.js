@@ -282,12 +282,15 @@
           } else {
             el.append(inst);
           }
-          return inst.delegateTo(this);
+          if (typeof inst.delegateTo === "function") {
+            inst.delegateTo(this);
+          }
         } else if (comp instanceof Component) {
-          return el.append(comp.node);
+          el.append(comp.node);
         } else {
-          return el.append(comp);
+          el.append(comp);
         }
+        return this;
       };
 
       Component.prototype.include = function(comp, el) {
@@ -328,12 +331,15 @@
       };
 
       Component.prototype._getInitialState = function() {
-        var s, state, _i, _len, _ref;
+        var mixinStates, s, state, _i, _len, _ref;
         state = {};
-        _ref = this._runMixinMethod('getInitialState');
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          s = _ref[_i];
-          $.extend(state, s);
+        mixinStates = this._runMixinMethod('getInitialState');
+        if ($.isArray(mixinStates)) {
+          _ref = this._runMixinMethod('getInitialState');
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            s = _ref[_i];
+            $.extend(state, s);
+          }
         }
         $.extend(state, this.getInitialState());
         return state;
@@ -590,13 +596,15 @@
       Component.prototype._runMixinMethod = function() {
         var args, mixin, name, _i, _len, _ref, _ref1, _results;
         name = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-        _ref = this.mixins;
-        _results = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          mixin = _ref[_i];
-          _results.push((_ref1 = mixin[name]) != null ? typeof _ref1.apply === "function" ? _ref1.apply(this, args) : void 0 : void 0);
+        if ($.isArray(this.mixins)) {
+          _ref = this.mixins;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            mixin = _ref[_i];
+            _results.push((_ref1 = mixin[name]) != null ? typeof _ref1.apply === "function" ? _ref1.apply(this, args) : void 0 : void 0);
+          }
+          return _results;
         }
-        return _results;
       };
 
       return Component;

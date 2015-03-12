@@ -178,11 +178,13 @@ do (factory = ($) ->
 				# NOTICE: Edge case when comp with default key already 'appended', which will be rerendered and append to new position
 				inst = comp()
 				if inst.node then el.append inst.node else el.append inst
-				return inst.delegateTo(this)
+				inst.delegateTo?(this)
 			else if comp instanceof Component
 				el.append comp.node
+				comp.delegateTo(this)
 			else
 				el.append comp
+			this
 
 		include: (comp, el) ->
 			if el?

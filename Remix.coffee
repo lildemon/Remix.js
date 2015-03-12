@@ -207,8 +207,10 @@ do (factory = ($) ->
 
 		_getInitialState: ->
 			state = {}
-			for s in @_runMixinMethod('getInitialState')
-				$.extend(state, s)
+			mixinStates = @_runMixinMethod('getInitialState')
+			if $.isArray mixinStates
+				for s in @_runMixinMethod('getInitialState')
+					$.extend(state, s)
 			$.extend(state, @getInitialState())
 			state
 
@@ -368,8 +370,8 @@ do (factory = ($) ->
 				@_parseEvents()
 
 		_runMixinMethod: (name, args...) ->
-			for mixin in @mixins
-				mixin[name]?.apply?(this, args)
+			if $.isArray(@mixins)
+				mixin[name]?.apply?(this, args) for mixin in @mixins
 
 
 	GlobalComp = new Component()

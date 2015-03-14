@@ -324,10 +324,10 @@ do (factory = ($) ->
 						RemixClass = @addChild(className, Remix[className])
 					else
 						throw "Remixing child \"#{className}\" does not exist"
-				remixedComponent = RemixClass(state, $el.attr('key'), el)
+				remixedComponent = RemixClass(state, $el.attr('key'), el) #replace happend in constructor
 				unless remixedComponent.constructor.noTemplate
-					$el.replaceWith(remixedComponent.node)
 					refName = $el.attr 'ref'
+					#$el.replaceWith(remixedComponent.node)
 					@refs[refName] = remixedComponent.node if refName
 
 			# TODO: is there a better selector?

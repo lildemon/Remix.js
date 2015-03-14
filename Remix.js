@@ -287,6 +287,7 @@
           }
         } else if (comp instanceof Component) {
           el.append(comp.node);
+          comp.delegateTo(this);
         } else {
           el.append(comp);
         }
@@ -533,7 +534,6 @@
             }
             remixedComponent = RemixClass(state, $el.attr('key'), el);
             if (!remixedComponent.constructor.noTemplate) {
-              $el.replaceWith(remixedComponent.node);
               refName = $el.attr('ref');
               if (refName) {
                 return _this.refs[refName] = remixedComponent.node;

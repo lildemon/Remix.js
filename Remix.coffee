@@ -113,7 +113,8 @@ do (factory = ($) ->
 			else
 				throw 'What kind of template is this?'
 
-		constructor: (node) ->
+		constructor: (parent, node) ->
+			@parent = parent
 			# constructor better not override by child component
 			if node
 				@node = $(node)
@@ -407,8 +408,7 @@ do (factory = ($) ->
 					key = '$default' unless key
 					comp = parent._getChildComp(NewComp, key)
 					unless comp
-						comp = new NewComp(node)
-						comp.parent = parent
+						comp = new NewComp(parent, node)
 						comp.creator = CompProxy
 						comp.key = key
 						parent._regChildComp(comp, NewComp, key)

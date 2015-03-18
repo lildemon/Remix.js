@@ -214,7 +214,8 @@
         }
       };
 
-      function Component(node) {
+      function Component(parent, node) {
+        this.parent = parent;
         if (node) {
           this.node = $(node);
         } else if (this.constructor.noTemplate) {
@@ -668,8 +669,7 @@
             }
             comp = parent._getChildComp(NewComp, key);
             if (!comp) {
-              comp = new NewComp(node);
-              comp.parent = parent;
+              comp = new NewComp(parent, node);
               comp.creator = CompProxy;
               comp.key = key;
               parent._regChildComp(comp, NewComp, key);

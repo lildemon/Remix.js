@@ -393,7 +393,9 @@ do (factory = ($) ->
 			# http://blog.krawaller.se/posts/a-react-encapsulation-pattern/
 			for mixin in definition.mixins
 				for own key, val of mixin
-					unless Component::[key]?
+					# mixin method should not override definitions and components original method
+					# TODO: edge case, upcoming mixin wont override previous mixin method
+					if not Component::[key]? and not definition[key]?
 						definition[key] = val
 
 			class NewComp extends Component

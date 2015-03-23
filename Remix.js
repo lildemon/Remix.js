@@ -638,7 +638,7 @@
           for (key in mixin) {
             if (!__hasProp.call(mixin, key)) continue;
             val = mixin[key];
-            if (Component.prototype[key] == null) {
+            if ((Component.prototype[key] == null) && (definition[key] == null)) {
               definition[key] = val;
             }
           }

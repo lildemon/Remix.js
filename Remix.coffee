@@ -142,6 +142,9 @@ do (factory = ($) ->
 			# some parent comp might intrested on child comp's update
 				# Panels().on('updated', @proxy(@updateTabs))
 
+		onTransclude: ->
+			# deprecate above
+
 		addChild: (name, childMix) ->
 			# add a Remix Component class to this instance, make this instance as its parent
 			@[name] = childMix.setParent(this)
@@ -280,8 +283,12 @@ do (factory = ($) ->
 				@_parseRemix()
 				@_parseEvents()
 
+				# TODO: deprecate onNodeCreated
 				@_runMixinMethod('onNodeCreated', oldNode)
 				@onNodeCreated(oldNode)
+
+				@_runMixinMethod('onTransclude', oldNode)
+				@onTransclude(oldNode)
 
 			if @constructor.templateNode
 				oldNode = @node

@@ -237,6 +237,8 @@
 
       Component.prototype.onNodeCreated = function() {};
 
+      Component.prototype.onTransclude = function() {};
+
       Component.prototype.addChild = function(name, childMix) {
         return this[name] = childMix.setParent(this);
       };
@@ -460,7 +462,9 @@
             _this._parseRemix();
             _this._parseEvents();
             _this._runMixinMethod('onNodeCreated', oldNode);
-            return _this.onNodeCreated(oldNode);
+            _this.onNodeCreated(oldNode);
+            _this._runMixinMethod('onTransclude', oldNode);
+            return _this.onTransclude(oldNode);
           };
         })(this);
         if (this.constructor.templateNode) {

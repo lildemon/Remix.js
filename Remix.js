@@ -455,12 +455,12 @@
       Component.prototype._parseNode = function() {
         var nodeReady, oldNode;
         nodeReady = (function(_this) {
-          return function() {
+          return function(oldNode) {
             _this._parseRefs();
             _this._parseRemix();
             _this._parseEvents();
-            _this._runMixinMethod('onNodeCreated');
-            return _this.onNodeCreated();
+            _this._runMixinMethod('onNodeCreated', oldNode);
+            return _this.onNodeCreated(oldNode);
           };
         })(this);
         if (this.constructor.templateNode) {
@@ -469,7 +469,7 @@
           if (oldNode) {
             oldNode.replaceWith(this.node);
           }
-          return nodeReady();
+          return nodeReady(oldNode);
         } else if (this.constructor.noTemplate) {
           return nodeReady();
         } else {

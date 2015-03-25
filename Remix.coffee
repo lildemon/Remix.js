@@ -275,19 +275,19 @@ do (factory = ($) ->
 					@addChild(key, comp)
 
 		_parseNode: ->
-			nodeReady = =>
+			nodeReady = (oldNode) =>
 				@_parseRefs()
 				@_parseRemix()
 				@_parseEvents()
 
-				@_runMixinMethod('onNodeCreated')
-				@onNodeCreated()
+				@_runMixinMethod('onNodeCreated', oldNode)
+				@onNodeCreated(oldNode)
 
 			if @constructor.templateNode
 				oldNode = @node
 				@node = @constructor.templateNode.clone()
 				oldNode.replaceWith(@node) if oldNode
-				nodeReady()
+				nodeReady(oldNode)
 			else if @constructor.noTemplate
 				nodeReady()
 			else

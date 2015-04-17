@@ -280,6 +280,11 @@ do (factory = ($) ->
 		_parseNode: ->
 			nodeReady = (oldNode) =>
 				@_parseRefs()
+
+				# Transclude here to be able to access ref node and parse remix next
+				@_runMixinMethod('onTransclude', oldNode)
+				@onTransclude(oldNode)
+
 				@_parseRemix()
 				@_parseEvents()
 
@@ -287,8 +292,7 @@ do (factory = ($) ->
 				@_runMixinMethod('onNodeCreated', oldNode)
 				@onNodeCreated(oldNode)
 
-				@_runMixinMethod('onTransclude', oldNode)
-				@onTransclude(oldNode)
+				
 
 			if @constructor.templateNode
 				oldNode = @node

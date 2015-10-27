@@ -224,6 +224,7 @@
         this.child_components = {};
         this.state = this._getInitialState();
         this.refs = {};
+        this.childs = {};
         this._initialRender = true;
         this._parseRemixChild();
         this._parseNode();
@@ -542,7 +543,10 @@
             if (!remixedComponent.constructor.noTemplate) {
               refName = $el.attr('ref');
               if (refName) {
-                return _this.refs[refName] = remixedComponent.node;
+                _this.refs[refName] = remixedComponent.node;
+              }
+              if (refName) {
+                return _this.childs[refName] = remixedComponent;
               }
             }
           };

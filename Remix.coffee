@@ -321,6 +321,7 @@ do (factory = ($) ->
 				catch e
 					throw 'This build of Zepto does not support data() -> object'
 				for key, val of state
+					val = val + ""
 					if val.indexOf('@') is 0
 						propName = val.substring(1)
 						if @[propName]?

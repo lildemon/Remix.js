@@ -693,8 +693,7 @@
           };
           CompProxy.setParent = setParent;
           CompProxy.bindNode = function(node, key) {
-            CompProxy({}, key, node);
-            return CompProxy;
+            return CompProxy({}, key, node);
           };
           CompProxy.get = function(key) {
             if (!key) {

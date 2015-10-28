@@ -442,7 +442,7 @@ do (factory = ($) ->
 				CompProxy.setParent = setParent
 				CompProxy.bindNode = (node, key) ->
 					CompProxy({}, key, node)
-					CompProxy
+					#CompProxy
 				CompProxy.get = (key) ->
 					key = '$default' unless key
 					parent._getChildComp(NewComp, key)

@@ -341,10 +341,11 @@ do (factory = ($) ->
 				remixedComponent = RemixClass(state, $el.attr('key'), el) #replace happend in constructor
 				unless remixedComponent.constructor.noTemplate
 					refName = $el.attr 'ref'
-					#$el.replaceWith(remixedComponent.node)
-					@refs[refName] = remixedComponent.node if refName
-					# 如果remix对象有ref属性，把引用保存于childs中
-					@childs[refName] = remixedComponent if refName
+					if refName
+						#$el.replaceWith(remixedComponent.node)
+						@refs[refName] = remixedComponent.node
+						# 如果remix对象有ref属性，把引用保存于childs中
+						@childs[refName] = remixedComponent
 
 			# TODO: is there a better selector?
 			@node.find('[remix]').not(@node.find('[remix] [remix]')).each ->

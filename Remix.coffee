@@ -97,7 +97,7 @@ do (factory = ($) ->
 			if typeof template is 'string'
 				if !!~template.indexOf('<')
 					@templateNode = $($.parseHTML(template))
-				else
+				else if !!~template.indexOf('/')
 					xhr = $.get template
 					xhr.done (html)=>
 						@templateNode = $($.parseHTML(html))
@@ -108,10 +108,16 @@ do (factory = ($) ->
 						@.trigger('template-loaded')
 						
 					#xhr.error errHandle
+				else
+					@templateNode = $(template)
+			else
+				@templateNode = $(template)
+			###
 			else if template.nodeType and template.nodeType is 1
 				@templateNode = template
 			else
 				throw 'What kind of template is this?'
+			###
 
 		constructor: (parent, node) ->
 			@parent = parent
@@ -373,7 +379,7 @@ do (factory = ($) ->
 							selfHandler = @[handler]
 							unless selfHandler?
 								throw "handler #{handler} not found"
-							selfHandler?.call @, e
+							selfHandler?.call @, e, $(e.currentTarget)
 					ref = if refProp then (if refProp is '@' then @node else @refs[refProp]) else @node
 					unless ref?
 						throw "Event's referencing node \"#{refProp}\" does not exist"
@@ -415,7 +421,7 @@ do (factory = ($) ->
 						definition[key] = val
 
 			class NewComp extends Component
-				@include definition
+				@include definition # include is become prototype
 				#@extend definition
 				@loadTemplate(definition.template)
 				@$id = Remix.id_counter++

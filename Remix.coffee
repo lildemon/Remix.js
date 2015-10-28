@@ -130,6 +130,7 @@ do (factory = ($) ->
 			@child_components = {}
 			@state = @_getInitialState()
 			@refs = {}
+			@childs = {}
 			@_initialRender = true
 			@_parseRemixChild()
 			@_parseNode()
@@ -327,6 +328,7 @@ do (factory = ($) ->
 				catch e
 					throw 'This build of Zepto does not support data() -> object'
 				for key, val of state
+					val = val + ""
 					if val.indexOf('@') is 0
 						propName = val.substring(1)
 						if @[propName]?
@@ -347,6 +349,8 @@ do (factory = ($) ->
 					refName = $el.attr 'ref'
 					#$el.replaceWith(remixedComponent.node)
 					@refs[refName] = remixedComponent.node if refName
+					# 如果remix对象有ref属性，把引用保存于childs中
+					@childs[refName] = remixedComponent if refName
 
 			# TODO: is there a better selector?
 			@node.find('[remix]').not(@node.find('[remix] [remix]')).each ->

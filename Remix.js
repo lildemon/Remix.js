@@ -310,7 +310,9 @@
             el.empty();
           }
         }
-        return this.append.apply(this, arguments);
+        comp = this.append.apply(this, arguments);
+        setTimeout(this.proxy(this._clearComps), 0);
+        return comp;
       };
 
       Component.prototype.empty = function() {

@@ -200,7 +200,10 @@ do (factory = ($) ->
 		include: (comp, el) ->
 			if el?
 				el.empty?()
-			@append.apply(this, arguments)
+			comp = @append.apply(this, arguments)
+			# reclaim memory after include
+			setTimeout(@proxy(@_clearComps), 0)
+			comp
 
 		empty: ->
 			@node.empty()

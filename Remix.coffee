@@ -345,13 +345,13 @@ do (factory = ($) ->
 					else
 						throw "Remixing child \"#{className}\" does not exist"
 				remixedComponent = RemixClass(state, $el.attr('key'), el) #replace happend in constructor
-				unless remixedComponent.constructor.noTemplate
-					refName = $el.attr 'ref'
-					if refName
-						#$el.replaceWith(remixedComponent.node)
-						@refs[refName] = remixedComponent.node
-						# 如果remix对象有ref属性，把引用保存于childs中
-						@childs[refName] = remixedComponent
+				#unless remixedComponent.constructor.noTemplate
+				refName = $el.attr 'ref'
+				if refName
+					#$el.replaceWith(remixedComponent.node)
+					@refs[refName] = remixedComponent.node
+					# 如果remix对象有ref属性，把引用保存于childs中
+					@childs[refName] = remixedComponent
 
 			# TODO: is there a better selector?
 			@node.find('[remix]').not(@node.find('[remix] [remix]')).each ->

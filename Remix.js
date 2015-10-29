@@ -547,12 +547,10 @@
               }
             }
             remixedComponent = RemixClass(state, $el.attr('key'), el);
-            if (!remixedComponent.constructor.noTemplate) {
-              refName = $el.attr('ref');
-              if (refName) {
-                _this.refs[refName] = remixedComponent.node;
-                return _this.childs[refName] = remixedComponent;
-              }
+            refName = $el.attr('ref');
+            if (refName) {
+              _this.refs[refName] = remixedComponent.node;
+              return _this.childs[refName] = remixedComponent;
             }
           };
         })(this);

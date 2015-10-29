@@ -282,19 +282,18 @@
       };
 
       Component.prototype.append = function(comp, el) {
-        var inst;
         if (el == null) {
           el = this.node;
         }
         if (typeof comp === 'function') {
-          inst = comp();
-          if (inst.node) {
-            el.append(inst.node);
+          comp = comp();
+          if (comp.node) {
+            el.append(comp.node);
           } else {
-            el.append(inst);
+            el.append(comp);
           }
-          if (typeof inst.delegateTo === "function") {
-            inst.delegateTo(this);
+          if (typeof comp.delegateTo === "function") {
+            comp.delegateTo(this);
           }
         } else if (comp instanceof Component) {
           el.append(comp.node);
@@ -302,7 +301,7 @@
         } else {
           el.append(comp);
         }
-        return this;
+        return comp;
       };
 
       Component.prototype.include = function(comp, el) {

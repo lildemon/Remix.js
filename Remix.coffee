@@ -187,20 +187,23 @@ do (factory = ($) ->
 				el = @node
 			if typeof comp is 'function'
 				# NOTICE: Edge case when comp with default key already 'appended', which will be rerendered and append to new position
-				inst = comp()
-				if inst.node then el.append inst.node else el.append inst
-				inst.delegateTo?(this)
+				comp = comp()
+				if comp.node then el.append comp.node else el.append comp
+				comp.delegateTo?(this)
 			else if comp instanceof Component
 				el.append comp.node
 				comp.delegateTo(this)
 			else
 				el.append comp
-			this
+			comp
 
 		include: (comp, el) ->
 			if el?
 				el.empty?()
-			@append.apply(this, arguments)
+			comp = @append.apply(this, arguments)
+			# reclaim memory after include
+			setTimeout(@proxy(@_clearComps), 0)
+			comp
 
 		empty: ->
 			@node.empty()
@@ -346,12 +349,13 @@ do (factory = ($) ->
 					else
 						throw "Remixing child \"#{className}\" does not exist"
 				remixedComponent = RemixClass(state, $el.attr('key'), el) #replace happend in constructor
-				unless remixedComponent.constructor.noTemplate
-					refName = $el.attr 'ref'
+				#unless remixedComponent.constructor.noTemplate
+				refName = $el.attr 'ref'
+				if refName
 					#$el.replaceWith(remixedComponent.node)
-					@refs[refName] = remixedComponent.node if refName
+					@refs[refName] = remixedComponent.node
 					# 如果remix对象有ref属性，把引用保存于childs中
-					@childs[refName] = remixedComponent if refName
+					@childs[refName] = remixedComponent
 
 			# TODO: is there a better selector?
 			@node.find('[remix]').not(@node.find('[remix] [remix]')).each ->
@@ -442,7 +446,7 @@ do (factory = ($) ->
 				CompProxy.setParent = setParent
 				CompProxy.bindNode = (node, key) ->
 					CompProxy({}, key, node)
-					CompProxy
+					#CompProxy
 				CompProxy.get = (key) ->
 					key = '$default' unless key
 					parent._getChildComp(NewComp, key)

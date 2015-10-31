@@ -188,7 +188,7 @@
         if (typeof template === 'string') {
           if (!!~template.indexOf('<')) {
             return this.templateNode = $($.parseHTML(template));
-          } else {
+          } else if (!!~template.indexOf('/')) {
             xhr = $.get(template);
             xhr.done((function(_this) {
               return function(html) {
@@ -206,12 +206,19 @@
                 return _this.trigger('template-loaded');
               };
             })(this));
+          } else {
+            return this.templateNode = $(template);
           }
-        } else if (template.nodeType && template.nodeType === 1) {
-          return this.templateNode = template;
         } else {
-          throw 'What kind of template is this?';
+          return this.templateNode = $(template);
         }
+
+        /*
+        			else if template.nodeType and template.nodeType is 1
+        				@templateNode = template
+        			else
+        				throw 'What kind of template is this?'
+         */
       };
 
       function Component(parent, node) {
@@ -582,7 +589,7 @@
                   if (selfHandler == null) {
                     throw "handler " + handler + " not found";
                   }
-                  return selfHandler != null ? selfHandler.call(_this, e) : void 0;
+                  return selfHandler != null ? selfHandler.call(_this, e, $(e.currentTarget)) : void 0;
                 };
               };
             })(this)(handler);

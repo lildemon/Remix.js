@@ -325,6 +325,7 @@ do (factory = ($) ->
 				$el = $(el)
 				try
 					state = $el.data()
+					state = $.extend({}, state) # Zepto will clear data if manipulates $el node
 				catch e
 					throw 'This build of Zepto does not support data() -> object'
 				for key, val of state

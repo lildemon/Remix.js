@@ -282,18 +282,19 @@
       };
 
       Component.prototype.append = function(comp, el) {
+        var inst;
         if (el == null) {
           el = this.node;
         }
         if (typeof comp === 'function') {
-          comp = comp();
-          if (comp.node) {
-            el.append(comp.node);
+          inst = comp();
+          if (inst.node) {
+            el.append(inst.node);
           } else {
-            el.append(comp);
+            el.append(inst);
           }
-          if (typeof comp.delegateTo === "function") {
-            comp.delegateTo(this);
+          if (typeof inst.delegateTo === "function") {
+            inst.delegateTo(this);
           }
         } else if (comp instanceof Component) {
           el.append(comp.node);
@@ -301,7 +302,7 @@
         } else {
           el.append(comp);
         }
-        return comp;
+        return this;
       };
 
       Component.prototype.include = function(comp, el) {
@@ -310,9 +311,7 @@
             el.empty();
           }
         }
-        comp = this.append.apply(this, arguments);
-        setTimeout(this.proxy(this._clearComps), 0);
-        return comp;
+        return this.append.apply(this, arguments);
       };
 
       Component.prototype.empty = function() {
@@ -548,10 +547,14 @@
               }
             }
             remixedComponent = RemixClass(state, $el.attr('key'), el);
-            refName = $el.attr('ref');
-            if (refName) {
-              _this.refs[refName] = remixedComponent.node;
-              return _this.childs[refName] = remixedComponent;
+            if (!remixedComponent.constructor.noTemplate) {
+              refName = $el.attr('ref');
+              if (refName) {
+                _this.refs[refName] = remixedComponent.node;
+              }
+              if (refName) {
+                return _this.childs[refName] = remixedComponent;
+              }
             }
           };
         })(this);
@@ -692,7 +695,8 @@
           };
           CompProxy.setParent = setParent;
           CompProxy.bindNode = function(node, key) {
-            return CompProxy({}, key, node);
+            CompProxy({}, key, node);
+            return CompProxy;
           };
           CompProxy.get = function(key) {
             if (!key) {

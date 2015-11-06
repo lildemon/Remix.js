@@ -127,6 +127,7 @@ do (factory = ($) ->
 			else if @constructor.noTemplate
 				throw 'No template component must created with node'
 
+			@_is_lazy_load = !(@constructor.templateNode or @constructor.noTemplate or @constructor is Component)
 			@child_components = {}
 			@state = @_getInitialState()
 			@refs = {}
@@ -135,9 +136,16 @@ do (factory = ($) ->
 			@_parseRemixChild()
 			@_parseNode()
 
-			@_runMixinMethod('initialize')
-			@initialize()
+			runInit = =>
+				@_runMixinMethod('initialize')
+				@initialize()
 
+			if @_is_lazy_load
+				@constructor.one 'template-loaded', =>
+					@_parseNode()
+					runInit()
+			else
+				runInit()
 		initialize: ->
 			# only Remix Child can be garenteed to be used
 
@@ -242,19 +250,17 @@ do (factory = ($) ->
 				@render(state)
 				setTimeout(@proxy(@_clearComps), 0)
 
-			if @constructor.templateNode or @constructor.noTemplate
-				whenReady()
-				
+			if @_is_lazy_load
+				@constructor.one 'template-loaded', whenReady
 			else
-				@constructor.one 'template-loaded', =>
-					@_parseNode()
-					whenReady()
+				whenReady()
 
 			@node
 
 		_getChildComp: (CompClass, key) ->
 			# The class is unique identifier to this component
 			@child_components?[ CompClass.$id ]?[key]
+
 
 		_getAllChildComp: (CompClass) ->
 			if CompClass

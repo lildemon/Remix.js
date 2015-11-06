@@ -222,12 +222,14 @@
       };
 
       function Component(parent, node) {
+        var runInit;
         this.parent = parent;
         if (node) {
           this.node = $(node);
         } else if (this.constructor.noTemplate) {
           throw 'No template component must created with node';
         }
+        this._is_lazy_load = !(this.constructor.templateNode || this.constructor.noTemplate || this.constructor === Component);
         this.child_components = {};
         this.state = this._getInitialState();
         this.refs = {};
@@ -235,8 +237,22 @@
         this._initialRender = true;
         this._parseRemixChild();
         this._parseNode();
-        this._runMixinMethod('initialize');
-        this.initialize();
+        runInit = (function(_this) {
+          return function() {
+            _this._runMixinMethod('initialize');
+            return _this.initialize();
+          };
+        })(this);
+        if (this._is_lazy_load) {
+          this.constructor.one('template-loaded', (function(_this) {
+            return function() {
+              _this._parseNode();
+              return runInit();
+            };
+          })(this));
+        } else {
+          runInit();
+        }
       }
 
       Component.prototype.initialize = function() {};
@@ -378,15 +394,10 @@
             return setTimeout(_this.proxy(_this._clearComps), 0);
           };
         })(this);
-        if (this.constructor.templateNode || this.constructor.noTemplate) {
-          whenReady();
+        if (this._is_lazy_load) {
+          this.constructor.one('template-loaded', whenReady);
         } else {
-          this.constructor.one('template-loaded', (function(_this) {
-            return function() {
-              _this._parseNode();
-              return whenReady();
-            };
-          })(this));
+          whenReady();
         }
         return this.node;
       };

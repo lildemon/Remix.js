@@ -354,11 +354,11 @@ do (factory = ($) ->
 						RemixClass = @addChild(className, Remix[className])
 					else
 						throw "Remixing child \"#{className}\" does not exist"
-				remixedComponent = RemixClass(state, $el.attr('key'), el) #replace happend in constructor
-				#unless remixedComponent.constructor.noTemplate
+				remixedComponent = RemixClass(state, $el.attr('key'), el)
+				unless remixedComponent.constructor.noTemplate
+					$el.replaceWith(remixedComponent.node)
 				refName = $el.attr 'ref'
 				if refName
-					#$el.replaceWith(remixedComponent.node)
 					@refs[refName] = remixedComponent.node
 					# 如果remix对象有ref属性，把引用保存于childs中
 					@childs[refName] = remixedComponent

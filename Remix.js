@@ -187,6 +187,7 @@
         }
         if (typeof template === 'string') {
           if (!!~template.indexOf('<')) {
+            template = $.trim(template);
             return this.templateNode = $($.parseHTML(template));
           } else if (!!~template.indexOf('/')) {
             xhr = $.get(template);
@@ -487,17 +488,22 @@
             return _this.onNodeCreated(oldNode);
           };
         })(this);
+        if (this.constructor.noTemplate) {
+          nodeReady();
+          return;
+        }
+        oldNode = this.node;
         if (this.constructor.templateNode) {
-          oldNode = this.node;
           this.node = this.constructor.templateNode.clone();
           if (oldNode) {
             oldNode.replaceWith(this.node);
           }
           return nodeReady(oldNode);
-        } else if (this.constructor.noTemplate) {
-          return nodeReady();
         } else {
-          return this.node = $($.parseHTML('<span class="loading">loading..</span>'));
+          this.node = $($.parseHTML('<span class="loading">loading..</span>'));
+          if (oldNode) {
+            return oldNode.replaceWith(this.node);
+          }
         }
       };
 
@@ -560,9 +566,6 @@
               }
             }
             remixedComponent = RemixClass(state, $el.attr('key'), el);
-            if (!remixedComponent.constructor.noTemplate) {
-              $el.replaceWith(remixedComponent.node);
-            }
             refName = $el.attr('ref');
             if (refName) {
               _this.refs[refName] = remixedComponent.node;

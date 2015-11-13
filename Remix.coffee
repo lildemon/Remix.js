@@ -96,6 +96,7 @@ do (factory = ($) ->
 
 			if typeof template is 'string'
 				if !!~template.indexOf('<')
+					template = $.trim(template)
 					@templateNode = $($.parseHTML(template))
 				else if !!~template.indexOf('/')
 					xhr = $.get template
@@ -308,17 +309,18 @@ do (factory = ($) ->
 				@_runMixinMethod('onNodeCreated', oldNode)
 				@onNodeCreated(oldNode)
 
-				
+			if @constructor.noTemplate
+				nodeReady()
+				return
 
+			oldNode = @node
 			if @constructor.templateNode
-				oldNode = @node
-				@node = @constructor.templateNode.clone()
+				@node = @constructor.templateNode.clone() # TODO: node might be unnecessarily cloned, if template is 'string'
 				oldNode.replaceWith(@node) if oldNode
 				nodeReady(oldNode)
-			else if @constructor.noTemplate
-				nodeReady()
 			else
 				@node = $($.parseHTML('<span class="loading">loading..</span>'))
+				oldNode.replaceWith(@node) if oldNode
 
 		_parseRefs: ->
 			refnodes = @node.find('[ref]')
@@ -354,9 +356,9 @@ do (factory = ($) ->
 						RemixClass = @addChild(className, Remix[className])
 					else
 						throw "Remixing child \"#{className}\" does not exist"
-				remixedComponent = RemixClass(state, $el.attr('key'), el)
-				unless remixedComponent.constructor.noTemplate
-					$el.replaceWith(remixedComponent.node)
+				remixedComponent = RemixClass(state, $el.attr('key'), el) #replace happend in constructor
+				#unless remixedComponent.constructor.noTemplate
+				#	$el.replaceWith(remixedComponent.node)
 				refName = $el.attr 'ref'
 				if refName
 					@refs[refName] = remixedComponent.node

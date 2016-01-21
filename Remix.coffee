@@ -249,6 +249,7 @@ do (factory = ($) ->
 					@_initialRender = false
 				@_runMixinMethod('render', state)
 				@render(state)
+				#setTimeout((=> @render(state)), 0) # render for nextTick to make sure parent initialized properly
 				setTimeout(@proxy(@_clearComps), 0)
 
 			if @_is_lazy_load
@@ -356,14 +357,19 @@ do (factory = ($) ->
 						RemixClass = @addChild(className, Remix[className])
 					else
 						throw "Remixing child \"#{className}\" does not exist"
-				remixedComponent = RemixClass(state, $el.attr('key'), el) #replace happend in constructor
+
+				compBeforeRender = (comp) => # 在render之前保证parent已经有ref和childs引用，以免调用链中使用到
+					refName = $el.attr 'ref'
+					if refName
+						@refs[refName] = comp.node
+						# 如果remix对象有ref属性，把引用保存于childs中
+						@childs[refName] = comp
+
+				remixedComponent = RemixClass(state, $el.attr('key'), el, compBeforeRender) #replace happend in constructor
 				#unless remixedComponent.constructor.noTemplate
 				#	$el.replaceWith(remixedComponent.node)
-				refName = $el.attr 'ref'
-				if refName
-					@refs[refName] = remixedComponent.node
-					# 如果remix对象有ref属性，把引用保存于childs中
-					@childs[refName] = remixedComponent
+
+
 
 			# TODO: is there a better selector?
 			@node.find('[remix]').not(@node.find('[remix] [remix]')).each ->
@@ -439,7 +445,7 @@ do (factory = ($) ->
 				@$id = Remix.id_counter++
 
 			setParent = (parent)->
-				CompProxy = (state, key, node) ->
+				CompProxy = (state, key, node, callWithCompBeforeRender) ->
 					node = $(node).get(0)
 					key = '$default' unless key
 					comp = parent._getChildComp(NewComp, key)
@@ -449,6 +455,7 @@ do (factory = ($) ->
 						comp.key = key
 						parent._regChildComp(comp, NewComp, key)
 
+					callWithCompBeforeRender?(comp)
 					comp._optimistRender(state)
 					comp
 				CompProxy.setParent = setParent

@@ -527,7 +527,7 @@
         var handleRemixNode;
         handleRemixNode = (function(_this) {
           return function(el) {
-            var $el, RemixClass, className, e, error, key, propName, refName, remixedComponent, state, val;
+            var $el, RemixClass, className, compBeforeRender, e, error, key, propName, remixedComponent, state, val;
             $el = $(el);
             try {
               state = $el.data();
@@ -565,12 +565,15 @@
                 throw "Remixing child \"" + className + "\" does not exist";
               }
             }
-            remixedComponent = RemixClass(state, $el.attr('key'), el);
-            refName = $el.attr('ref');
-            if (refName) {
-              _this.refs[refName] = remixedComponent.node;
-              return _this.childs[refName] = remixedComponent;
-            }
+            compBeforeRender = function(comp) {
+              var refName;
+              refName = $el.attr('ref');
+              if (refName) {
+                _this.refs[refName] = comp.node;
+                return _this.childs[refName] = comp;
+              }
+            };
+            return remixedComponent = RemixClass(state, $el.attr('key'), el, compBeforeRender);
           };
         })(this);
         return this.node.find('[remix]').not(this.node.find('[remix] [remix]')).each(function() {
@@ -692,7 +695,7 @@
         })(Component);
         setParent = function(parent) {
           var CompProxy;
-          CompProxy = function(state, key, node) {
+          CompProxy = function(state, key, node, callWithCompBeforeRender) {
             var comp;
             node = $(node).get(0);
             if (!key) {
@@ -704,6 +707,9 @@
               comp.creator = CompProxy;
               comp.key = key;
               parent._regChildComp(comp, NewComp, key);
+            }
+            if (typeof callWithCompBeforeRender === "function") {
+              callWithCompBeforeRender(comp);
             }
             comp._optimistRender(state);
             return comp;

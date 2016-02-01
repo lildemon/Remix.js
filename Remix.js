@@ -732,6 +732,14 @@
               return comp.destroy();
             });
           };
+          CompProxy.extend = function(name, extend_def) {
+            if (!extend_def) {
+              extend_def = name;
+              name = null;
+            }
+            extend_def = $.extend({}, definition, extend_def);
+            return Remix.create(name, extend_def);
+          };
           return CompProxy;
         };
         NewRemix = setParent(GlobalComp);

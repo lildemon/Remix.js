@@ -470,6 +470,12 @@ do (factory = ($) ->
 				CompProxy.destroyAll = ->
 					$.each CompProxy.getAll(), (i, comp) ->
 						comp.destroy()
+				CompProxy.extend = (name, extend_def) ->
+					unless extend_def
+						extend_def = name
+						name = null
+					extend_def = $.extend({}, definition, extend_def)
+					Remix.create(name, extend_def)
 				CompProxy
 
 			NewRemix = setParent(GlobalComp)

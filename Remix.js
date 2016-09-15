@@ -235,6 +235,7 @@
         this.state = this._getInitialState();
         this.refs = {};
         this.childs = {};
+        this._last_state_map = {};
         this._initialRender = true;
         this._parseRemixChild();
         this._parseNode();
@@ -391,6 +392,7 @@
               _this._initialRender = false;
             }
             _this._runMixinMethod('render', state);
+            _this._runRemixStateHandler(state);
             _this.render(state);
             return setTimeout(_this.proxy(_this._clearComps), 0);
           };
@@ -483,6 +485,7 @@
             _this._runMixinMethod('onTransclude', oldNode);
             _this.onTransclude(oldNode);
             _this._parseRemix();
+            _this._parseRemixBindState();
             _this._parseEvents();
             _this._runMixinMethod('onNodeCreated', oldNode);
             return _this.onNodeCreated(oldNode);
@@ -581,6 +584,25 @@
         });
       };
 
+      Component.prototype._parseRemixBindState = function() {
+        return this.node.on('change', (function(_this) {
+          return function(e) {
+            var $this, state_key, state_obj;
+            if (e.target === e.currentTarget) {
+              return;
+            }
+            e.stopPropagation();
+            $this = $(e.target);
+            state_key = $this.attr('remix-bind-state');
+            if (state_key) {
+              state_obj = {};
+              state_obj[state_key] = $this.val();
+              return _this.setState(state_obj);
+            }
+          };
+        })(this));
+      };
+
       Component.prototype._parseEvents = function() {
         var eventStr, eventType, handleEvent, handler, ref, ref1, ref2, refProp, results, selector;
         if (this.remixEvent && typeof this.remixEvent === 'object') {
@@ -637,6 +659,24 @@
           for (j = 0, len = ref1.length; j < len; j++) {
             mixin = ref1[j];
             results.push((ref2 = mixin[name]) != null ? typeof ref2.apply === "function" ? ref2.apply(this, args) : void 0 : void 0);
+          }
+          return results;
+        }
+      };
+
+      Component.prototype._runRemixStateHandler = function(state) {
+        var handler, key, results, val;
+        if (this.remixStateHandler) {
+          results = [];
+          for (key in state) {
+            val = state[key];
+            handler = this.remixStateHandler[key];
+            if (handler && val !== this._last_state_map[key]) {
+              handler.call(this, val);
+              results.push(this._last_state_map[key] = val);
+            } else {
+              results.push(void 0);
+            }
           }
           return results;
         }

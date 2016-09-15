@@ -133,6 +133,7 @@ do (factory = ($) ->
 			@state = @_getInitialState()
 			@refs = {}
 			@childs = {}
+			@_last_state_map = {} #用于存储上次的state值，跟新状态比对如果值是一样的话无需运行remixStateHandler对应方法
 			@_initialRender = true
 			@_parseRemixChild()
 			@_parseNode()
@@ -248,6 +249,7 @@ do (factory = ($) ->
 					@initialRender?(state)
 					@_initialRender = false
 				@_runMixinMethod('render', state)
+				@_runRemixStateHandler(state)
 				@render(state)
 				#setTimeout((=> @render(state)), 0) # render for nextTick to make sure parent initialized properly
 				setTimeout(@proxy(@_clearComps), 0)
@@ -304,7 +306,9 @@ do (factory = ($) ->
 				@onTransclude(oldNode)
 
 				@_parseRemix()
+				@_parseRemixBindState()
 				@_parseEvents()
+
 
 				# TODO: deprecate onNodeCreated
 				@_runMixinMethod('onNodeCreated', oldNode)
@@ -375,6 +379,19 @@ do (factory = ($) ->
 			@node.find('[remix]').not(@node.find('[remix] [remix]')).each ->
 				handleRemixNode(this)
 
+		_parseRemixBindState: ->
+			@node.on 'change', (e) =>
+				return if e.target is e.currentTarget # remix's node it self has remix-bind-state attribute
+
+				e.stopPropagation()
+				$this = $(e.target)
+				state_key = $this.attr('remix-bind-state')
+				if state_key
+					state_obj = {}
+					# TODO: Review for optGroup's val()
+					state_obj[state_key] = $this.val()
+					this.setState state_obj
+
 			
 
 		_parseEvents: ->
@@ -413,6 +430,15 @@ do (factory = ($) ->
 		_runMixinMethod: (name, args...) ->
 			if $.isArray(@mixins)
 				mixin[name]?.apply?(this, args) for mixin in @mixins
+
+		_runRemixStateHandler: (state) ->
+			if @remixStateHandler
+				for key, val of state
+					handler = @remixStateHandler[key]
+					if handler and val isnt @_last_state_map[key]
+						handler.call this, val
+						@_last_state_map[key] = val
+
 
 
 	GlobalComp = new Component()

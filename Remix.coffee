@@ -285,7 +285,9 @@ do (factory = ($) ->
 
 		_regChildComp: (comp, CompClass, key) ->
 			keyedComp = @child_components[ CompClass.$id ] or= {}
-			throw "child component already exist!" if keyedComp[key]?
+			if keyedComp[key]? and keyedComp[key] isnt comp
+				# Replace existing component
+				keyedComp[key].destroy()
 			keyedComp[key] = comp
 			comp
 

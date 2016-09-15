@@ -452,8 +452,8 @@
       Component.prototype._regChildComp = function(comp, CompClass, key) {
         var base, keyedComp, name1;
         keyedComp = (base = this.child_components)[name1 = CompClass.$id] || (base[name1] = {});
-        if (keyedComp[key] != null) {
-          throw "child component already exist!";
+        if ((keyedComp[key] != null) && keyedComp[key] !== comp) {
+          keyedComp[key].destroy();
         }
         keyedComp[key] = comp;
         return comp;

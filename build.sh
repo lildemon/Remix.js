@@ -1,3 +1,3 @@
 #!/bin/sh
-coffee -c Remix.coffee
+coffee -c remix.coffee
 uglifyjs remix.js -c -m -o remix.min.js

@@ -96,6 +96,7 @@ do (factory = ($) ->
 
 			if typeof template is 'string'
 				if !!~template.indexOf('<')
+					template = $.trim(template)
 					@templateNode = $($.parseHTML(template))
 				else if !!~template.indexOf('/')
 					xhr = $.get template
@@ -127,17 +128,26 @@ do (factory = ($) ->
 			else if @constructor.noTemplate
 				throw 'No template component must created with node'
 
+			@_is_lazy_load = !(@constructor.templateNode or @constructor.noTemplate or @constructor is Component)
 			@child_components = {}
 			@state = @_getInitialState()
 			@refs = {}
 			@childs = {}
+			@_last_state_map = {} #用于存储上次的state值，跟新状态比对如果值是一样的话无需运行remixStateHandler对应方法
 			@_initialRender = true
 			@_parseRemixChild()
 			@_parseNode()
 
-			@_runMixinMethod('initialize')
-			@initialize()
+			runInit = =>
+				@_runMixinMethod('initialize')
+				@initialize()
 
+			if @_is_lazy_load
+				@constructor.one 'template-loaded', =>
+					@_parseNode()
+					runInit()
+			else
+				runInit()
 		initialize: ->
 			# only Remix Child can be garenteed to be used
 
@@ -239,22 +249,22 @@ do (factory = ($) ->
 					@initialRender?(state)
 					@_initialRender = false
 				@_runMixinMethod('render', state)
+				@_runRemixStateHandler(state)
 				@render(state)
+				#setTimeout((=> @render(state)), 0) # render for nextTick to make sure parent initialized properly
 				setTimeout(@proxy(@_clearComps), 0)
 
-			if @constructor.templateNode or @constructor.noTemplate
-				whenReady()
-				
+			if @_is_lazy_load
+				@constructor.one 'template-loaded', whenReady
 			else
-				@constructor.one 'template-loaded', =>
-					@_parseNode()
-					whenReady()
+				whenReady()
 
 			@node
 
 		_getChildComp: (CompClass, key) ->
 			# The class is unique identifier to this component
 			@child_components?[ CompClass.$id ]?[key]
+
 
 		_getAllChildComp: (CompClass) ->
 			if CompClass
@@ -275,7 +285,9 @@ do (factory = ($) ->
 
 		_regChildComp: (comp, CompClass, key) ->
 			keyedComp = @child_components[ CompClass.$id ] or= {}
-			throw "child component already exist!" if keyedComp[key]?
+			if keyedComp[key]? and keyedComp[key] isnt comp
+				# Replace existing component
+				keyedComp[key].destroy()
 			keyedComp[key] = comp
 			comp
 
@@ -296,23 +308,26 @@ do (factory = ($) ->
 				@onTransclude(oldNode)
 
 				@_parseRemix()
+				@_parseRemixBindState()
 				@_parseEvents()
+
 
 				# TODO: deprecate onNodeCreated
 				@_runMixinMethod('onNodeCreated', oldNode)
 				@onNodeCreated(oldNode)
 
-				
+			if @constructor.noTemplate
+				nodeReady()
+				return
 
+			oldNode = @node
 			if @constructor.templateNode
-				oldNode = @node
-				@node = @constructor.templateNode.clone()
+				@node = @constructor.templateNode.clone() # TODO: node might be unnecessarily cloned, if template is 'string'
 				oldNode.replaceWith(@node) if oldNode
 				nodeReady(oldNode)
-			else if @constructor.noTemplate
-				nodeReady()
 			else
 				@node = $($.parseHTML('<span class="loading">loading..</span>'))
+				oldNode.replaceWith(@node) if oldNode
 
 		_parseRefs: ->
 			refnodes = @node.find('[ref]')
@@ -348,18 +363,36 @@ do (factory = ($) ->
 						RemixClass = @addChild(className, Remix[className])
 					else
 						throw "Remixing child \"#{className}\" does not exist"
-				remixedComponent = RemixClass(state, $el.attr('key'), el) #replace happend in constructor
+
+				compBeforeRender = (comp) => # 在render之前保证parent已经有ref和childs引用，以免调用链中使用到
+					refName = $el.attr 'ref'
+					if refName
+						@refs[refName] = comp.node
+						# 如果remix对象有ref属性，把引用保存于childs中
+						@childs[refName] = comp
+
+				remixedComponent = RemixClass(state, $el.attr('key'), el, compBeforeRender) #replace happend in constructor
 				#unless remixedComponent.constructor.noTemplate
-				refName = $el.attr 'ref'
-				if refName
-					#$el.replaceWith(remixedComponent.node)
-					@refs[refName] = remixedComponent.node
-					# 如果remix对象有ref属性，把引用保存于childs中
-					@childs[refName] = remixedComponent
+				#	$el.replaceWith(remixedComponent.node)
+
+
 
 			# TODO: is there a better selector?
 			@node.find('[remix]').not(@node.find('[remix] [remix]')).each ->
 				handleRemixNode(this)
+
+		_parseRemixBindState: ->
+			@node.on 'change', (e) =>
+				return if e.target is e.currentTarget # remix's node it self has remix-bind-state attribute
+
+				e.stopPropagation()
+				$this = $(e.target)
+				state_key = $this.attr('remix-bind-state')
+				if state_key
+					state_obj = {}
+					# TODO: Review for optGroup's val()
+					state_obj[state_key] = $this.val()
+					this.setState state_obj
 
 			
 
@@ -400,6 +433,15 @@ do (factory = ($) ->
 			if $.isArray(@mixins)
 				mixin[name]?.apply?(this, args) for mixin in @mixins
 
+		_runRemixStateHandler: (state) ->
+			if @remixStateHandler
+				for key, val of state
+					handler = @remixStateHandler[key]
+					if handler and val isnt @_last_state_map[key]
+						handler.call this, val
+						@_last_state_map[key] = val
+
+
 
 	GlobalComp = new Component()
 
@@ -431,7 +473,7 @@ do (factory = ($) ->
 				@$id = Remix.id_counter++
 
 			setParent = (parent)->
-				CompProxy = (state, key, node) ->
+				CompProxy = (state, key, node, callWithCompBeforeRender) ->
 					node = $(node).get(0)
 					key = '$default' unless key
 					comp = parent._getChildComp(NewComp, key)
@@ -441,6 +483,7 @@ do (factory = ($) ->
 						comp.key = key
 						parent._regChildComp(comp, NewComp, key)
 
+					callWithCompBeforeRender?(comp)
 					comp._optimistRender(state)
 					comp
 				CompProxy.setParent = setParent
@@ -455,6 +498,12 @@ do (factory = ($) ->
 				CompProxy.destroyAll = ->
 					$.each CompProxy.getAll(), (i, comp) ->
 						comp.destroy()
+				CompProxy.extend = (name, extend_def) ->
+					unless extend_def
+						extend_def = name
+						name = null
+					extend_def = $.extend({}, definition, extend_def)
+					Remix.create(name, extend_def)
 				CompProxy
 
 			NewRemix = setParent(GlobalComp)
